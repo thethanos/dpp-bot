@@ -1,6 +1,6 @@
 #pragma once
 
-#include "token.hpp"
+#include "Token.hpp"
 
 #include <unordered_map>
 #include <vector>

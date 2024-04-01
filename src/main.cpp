@@ -9,10 +9,13 @@
 
 int main(int argc, char** argv) {
 
-    auto db = DBConnection::get_conn();
+    auto err = DBConnection::get_conn()->create_tokens_table();
+    if (err.has_value()) {
+        return -1;
+    }
 
     TokenStorage tokens;
-    tokens.read_file("../keys.csv");
+    //tokens.read_file("../keys.csv");
     
     const char* token = std::getenv("BOT_TOKEN");
     if (token == nullptr) {

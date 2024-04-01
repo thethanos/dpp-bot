@@ -1,7 +1,5 @@
 #pragma once
 
-#include "rapidcsv.hpp"
-
 #include <string>
 
 enum Status

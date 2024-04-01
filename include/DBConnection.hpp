@@ -1,11 +1,16 @@
 #pragma once
 
 #include "sqlite3.h"
+#include "Token.hpp"
+
 #include <exception> 
 #include <iostream>
 #include <memory>
 #include <format>
 #include <optional>
+#include <functional>
+
+using Callback = int(void*,int,char**,char**);
 
 class DBConnection
 {
@@ -36,15 +41,12 @@ public:
         return m_dbConn;
     }
 
-    std::optional<const std::string> create_table()
-    {
-        return std::nullopt;
-    }
+    std::optional<const std::string> create_tokens_table();
+    std::optional<const std::string> insert_token(const Token&);
 
-    std::optional<const std::string> insert()
-    {
-        return std::nullopt;
-    }
+private:
+    std::optional<const std::string> execute_query(const std::string&, 
+        const std::function<Callback>& callback = std::nullptr_t{});
 
 private:
     sqlite3* m_sqlite{nullptr};
