@@ -4,9 +4,12 @@
 #include <iostream>
 #include <algorithm>
 
-#include "token_storage.hpp"
+#include "TokenStorage.hpp"
+#include "DBConnection.hpp"
 
 int main(int argc, char** argv) {
+
+    auto db = DBConnection::get_conn();
 
     TokenStorage tokens;
     tokens.read_file("../keys.csv");
