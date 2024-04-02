@@ -4,8 +4,8 @@ const std::optional<const std::string> TokenStorage::load_from_file(const std::s
 {   
     rapidcsv::Document doc(path, rapidcsv::LabelParams(-1, -1));
     if (doc.GetRowCount() == 0) {
-        const std::string error = "The file is empty\n";
-        std::cout << error;
+        const std::string error = "The file is empty";
+        std::cout << error << '\n';
         return error;
     }
 
@@ -36,7 +36,16 @@ const std::optional<const std::string> TokenStorage::load_from_file(const std::s
 }
 
 const std::optional<const std::string> TokenStorage::load_from_db()
-{
+{   
+    auto tokens = DBConnection::get_conn()->select_tokens();
+    if (tokens.empty()) {
+        const std::string error = "Failed to load tokens";
+        std::cout << error << '\n';
+        return error;
+    }
+
+    m_tokens = std::move(tokens);
+    m_randomizer.load_ids(m_tokens);
     return std::nullopt;
 }
 

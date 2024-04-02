@@ -9,14 +9,15 @@
 
 int main(int argc, char** argv) {
 
-    auto err = DBConnection::get_conn()->create_tokens_table();
+    auto err = DBConnection::get_conn()->create_token_table();
     if (err.has_value()) {
         return -1;
     }
 
     TokenStorage tokens;
-    //tokens.read_file("../keys.csv");
-    
+    //tokens.load_from_file("../keys.csv");
+    tokens.load_from_db();
+
     const char* token = std::getenv("BOT_TOKEN");
     if (token == nullptr) {
         std::cout << "Could not find the bot token.\n";

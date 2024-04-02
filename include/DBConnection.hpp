@@ -9,6 +9,7 @@
 #include <format>
 #include <optional>
 #include <functional>
+#include <unordered_map>
 
 using Callback = int(void*,int,char**,char**);
 
@@ -41,12 +42,12 @@ public:
         return m_dbConn;
     }
 
-    std::optional<const std::string> create_tokens_table();
+    std::optional<const std::string> create_token_table();
     std::optional<const std::string> insert_token(const Token&);
+    std::unordered_map<std::string, Token> select_tokens(const std::string& condition = "");
 
 private:
-    std::optional<const std::string> execute_query(const std::string&, 
-        const std::function<Callback>& callback = std::nullptr_t{});
+    std::optional<const std::string> execute_query(const std::string&, Callback callback = nullptr);
 
 private:
     sqlite3* m_sqlite{nullptr};
