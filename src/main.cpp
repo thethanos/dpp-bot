@@ -9,7 +9,7 @@ int main(int argc, char** argv)
     }
 
     BotHandler bot(token);
-    bot.init_data();
+    bot.init_data("../keys.csv");
     bot.init_handlers();
     bot.start();
 

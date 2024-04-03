@@ -1,4 +1,5 @@
 #include "Randomizer.hpp"
+#include "spdlog/spdlog.h"
 
 #include <random>
 #include <algorithm>
@@ -15,10 +16,11 @@ void Randomizer::load_ids(const std::unordered_map<std::string, Token>& tokens)
     }
 }
 
-std::string Randomizer::get_random_id()
+std::optional<const std::string> Randomizer::get_random_id()
 {
-    if (m_token_ids.size() == 0) {
-        return std::string{};
+    if (m_token_ids.empty()) {
+        spdlog::error("get_random_id: m_token_ids vector is empty");
+        return std::nullopt;
     }
 
     std::default_random_engine generator;

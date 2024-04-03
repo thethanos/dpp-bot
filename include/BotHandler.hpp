@@ -10,7 +10,7 @@ public:
     BotHandler(const std::string& token):m_bot(token) {}
 
 public:
-    int init_data();
+    int init_data(const std::string& path_to_keys = "");
     void init_handlers();
     void start() { m_bot.start(dpp::st_wait); }
 

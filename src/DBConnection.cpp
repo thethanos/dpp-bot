@@ -32,6 +32,24 @@ std::optional<const std::string> DBConnection::insert_token(const Token& token)
     return execute_query(query);
 }
 
+std::optional<const std::string> DBConnection::insert_tokens(const std::unordered_map<std::string, Token>& tokens)
+{
+    std::string values;
+    for (auto [id, token] : tokens) {
+        if (!values.empty()) {
+            values += ",";
+        }
+        values += std::format("(\"{}\", \"{}\", \"{}\", {}, {})",
+            token.id,
+            token.name,
+            token.key,
+            token.price,
+            token.priority
+        );
+    } 
+    return execute_query(std::format("INSERT INTO token(ID, NAME, ACTIVATION_KEY, PRICE, PRIORITY) VALUES {};", values));
+}
+
 std::unordered_map<std::string, Token> DBConnection::select_tokens(const std::string& condition)
 {  
     std::unordered_map<std::string, Token> tokens; 

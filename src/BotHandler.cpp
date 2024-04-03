@@ -3,17 +3,23 @@
 
 #include <algorithm>
 
-int BotHandler::init_data()
+int BotHandler::init_data(const std::string& path_to_keys)
 {
     if (auto error = DBConnection::get_conn()->create_token_table(); error.has_value()) {
         spdlog::error(error.value());
         return -1;
     }
 
-        //tokens.load_from_file("../keys.csv");
     if (auto error = m_tokens.load_from_db(); error.has_value()) {
         spdlog::error(error.value());
-        return -1;
+    }
+    
+    if (m_tokens.empty()) {
+        spdlog::info("init_data: trying to load from file..");
+        if (auto error = m_tokens.load_from_file(path_to_keys); error.has_value()) {
+            spdlog::error(error.value());
+            return -1;
+        }
     }
 
     m_bot.on_log([](const dpp::log_t& log){
@@ -54,6 +60,7 @@ void BotHandler::handle_slashcommand(const dpp::slashcommand_t& event)
         auto user_id = event.command.usr.id.str();
         std::optional<std::string> game_name = m_tokens.play(user_id);
         if (!game_name.has_value()) {
+            spdlog::error("TokenStorage returned no keys");
             event.reply("Sorry, we are out of keys. Please try again later.");
             return;
         }
@@ -84,6 +91,7 @@ void BotHandler::handle_button_click(const dpp::button_click_t& event)
 
     auto token = m_tokens.get_prize(user_id.str());
     if (!token.has_value()) {
+        spdlog::error("Failed to retrieve token by id");
         m_bot.message_create(dpp::message(event.command.channel_id, "Unknown error. Please try again later"));
         event.reply();
         event.delete_original_response();
@@ -95,4 +103,5 @@ void BotHandler::handle_button_click(const dpp::button_click_t& event)
 
     event.reply();
     event.delete_original_response();
+    m_tokens.remove_from_random(token.value());
 }
