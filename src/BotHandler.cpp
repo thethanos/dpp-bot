@@ -16,7 +16,21 @@ int BotHandler::init_data()
         return -1;
     }
 
-    m_bot.on_log(dpp::utility::cout_logger());
+    m_bot.on_log([](const dpp::log_t& log){
+        switch(log.severity) {
+            case dpp::loglevel::ll_info:
+                spdlog::info(log.message);
+                break;
+            case dpp::loglevel::ll_warning:
+                spdlog::warn(log.message);
+                break;
+            case dpp::loglevel::ll_error:
+                spdlog::error(log.message);
+                break;
+            default:
+                spdlog::trace(log.message);
+        } 
+    });
     return 0;
 }
 
