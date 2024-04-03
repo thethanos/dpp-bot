@@ -9,6 +9,16 @@ RUN apt-get update && \
 ENV CC=/usr/bin/gcc-13
 ENV CXX=/usr/bin/g++-13
 
+WORKDIR /usr/src/spdlog
+
+COPY spdlog/ .
+
+WORKDIR /usr/src/spdlog/build
+
+RUN cmake .. -DCMAKE_INSTALL_PREFIX=/usr
+RUN make -j 6
+RUN make install
+
 WORKDIR /usr/src/DPP
 
 COPY DPP/ .

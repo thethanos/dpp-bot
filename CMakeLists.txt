@@ -11,7 +11,7 @@ add_executable(${PROJECT_NAME} src/main.cpp ${SOURCES})
 find_package(DPP REQUIRED)   
 find_package(SQLite3 REQUIRED)
 
-target_link_libraries(${PROJECT_NAME} ${DPP_LIBRARIES} ${SQLite3_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${DPP_LIBRARIES} ${SQLite3_LIBRARIES} spdlog)
 
 target_include_directories(
     ${PROJECT_NAME} PRIVATE 
