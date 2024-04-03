@@ -1,10 +1,11 @@
 #pragma once
 
 #include "sqlite3.h"
+#include "spdlog/spdlog.h"
+
 #include "Token.hpp"
 
 #include <exception> 
-#include <iostream>
 #include <memory>
 #include <format>
 #include <optional>
@@ -36,7 +37,7 @@ public:
     {
         if (m_dbConn == nullptr) {
             m_dbConn = std::shared_ptr<DBConnection>(new DBConnection());
-            std::cout << "Data base connection opened successfully\n";
+            spdlog::info("Data base connection opened successfully");
         }
 
         return m_dbConn;

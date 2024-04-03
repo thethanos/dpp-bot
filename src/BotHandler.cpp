@@ -1,19 +1,18 @@
 #include "BotHandler.hpp"
 #include "DBConnection.hpp"
 
-#include <iostream>
 #include <algorithm>
 
 int BotHandler::init_data()
 {
-    if (auto err = DBConnection::get_conn()->create_token_table(); err.has_value()) {
-        std::cout << err.value() << '\n';
+    if (auto error = DBConnection::get_conn()->create_token_table(); error.has_value()) {
+        spdlog::error(error.value());
         return -1;
     }
 
         //tokens.load_from_file("../keys.csv");
-    if (auto err = m_tokens.load_from_db(); err.has_value()) {
-        std::cout << err.value() << '\n';
+    if (auto error = m_tokens.load_from_db(); error.has_value()) {
+        spdlog::error(error.value());
         return -1;
     }
 

@@ -46,14 +46,14 @@ std::unordered_map<std::string, Token> DBConnection::select_tokens(const std::st
     sqlite3_stmt* stmt;
     auto error_code = sqlite3_prepare_v2(m_sqlite, query.c_str(), -1, &stmt, nullptr);
     if (error_code != SQLITE_OK) {
-        std::cout << sqlite3_errmsg(m_sqlite) << '\n';
+        spdlog::error(sqlite3_errmsg(m_sqlite));
         return tokens;
     }
 
     while(true) {
         int error_code = sqlite3_step(stmt);
         if (error_code == SQLITE_ERROR) {
-            std::cout << sqlite3_errmsg(m_sqlite) << '\n';
+            spdlog::error(sqlite3_errmsg(m_sqlite));
             return tokens;
         }
 
@@ -76,14 +76,14 @@ std::unordered_map<std::string, Token> DBConnection::select_tokens(const std::st
 
 std::optional<const std::string> DBConnection::execute_query(const std::string& query, Callback callback)
 {
-    std::cout << std::format("Executing query: {}", query) << '\n';
+    spdlog::info("Executing query: {}", query);
 
     int error_code = sqlite3_exec(m_sqlite, query.c_str(), callback, nullptr, nullptr);
     if (error_code != SQLITE_OK) {
-        std::cout << sqlite3_errmsg(m_sqlite) << '\n';
+        spdlog::error(sqlite3_errmsg(m_sqlite));
         return sqlite3_errmsg(m_sqlite);
     }
 
-    std::cout << "Query executed successfully!\n";
+    spdlog::info("Query executed successfully!");
     return std::nullopt;
 }

@@ -1,11 +1,10 @@
 #include "BotHandler.hpp"
-#include "spdlog/spdlog.h"
 
 int main(int argc, char** argv) 
 {    
     const char* token = std::getenv("BOT_TOKEN");
     if (token == nullptr) {
-        std::cout << "Could not find the bot token.\n";
+        spdlog::error("Could not find the bot token");
         return -1;
     }
 
