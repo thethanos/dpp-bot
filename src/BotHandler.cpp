@@ -51,6 +51,7 @@ void BotHandler::handle_ready(const dpp::ready_t& event)
 {
     if (dpp::run_once<struct register_bot_commands>()) {
         m_bot.global_command_create(dpp::slashcommand("random", "Get random key!", m_bot.me.id));
+        m_bot.global_command_create(dpp::slashcommand("list", "Get list of available games", m_bot.me.id));
     }
 }
 
@@ -79,6 +80,10 @@ void BotHandler::handle_slashcommand(const dpp::slashcommand_t& event)
             
         event.reply(msg);
     }
+
+    if (event.command.get_command_name() == "list") {
+        
+    }
 }
 
 void BotHandler::handle_button_click(const dpp::button_click_t& event)
@@ -103,5 +108,5 @@ void BotHandler::handle_button_click(const dpp::button_click_t& event)
 
     event.reply();
     event.delete_original_response();
-    m_tokens.remove_from_random(token.value());
+    m_tokens.deactivate(token.value());
 }

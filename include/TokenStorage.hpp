@@ -14,7 +14,7 @@ public:
     const std::optional<const std::string> load_from_db();
 
     const std::optional<const std::string> play(const std::string&);
-    const std::optional<const std::string> remove_from_random(const Token&);
+    const std::optional<const std::string> deactivate(Token);
     const std::optional<Token> get_prize(const std::string&);
 
     const bool empty() const { return m_tokens.empty(); }

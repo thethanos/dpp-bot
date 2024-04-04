@@ -8,6 +8,7 @@ std::shared_ptr<DBConnection> DBConnection::m_dbConn = nullptr;
 std::optional<const std::string> DBConnection::create_token_table()
 {
     const std::string query = "CREATE TABLE IF NOT EXISTS token("\
+        "STATUS INT NOT NULL," \
         "ID CHAR(20) PRIMARY KEY NOT NULL,"\
         "NAME CHAR(30) NOT NULL,"\
         "ACTIVATION_KEY CHAR(30) NOT NULL," \
@@ -20,8 +21,9 @@ std::optional<const std::string> DBConnection::create_token_table()
 
 std::optional<const std::string> DBConnection::insert_token(const Token& token)
 {
-    std::string query = std::format("INSERT INTO token(ID, NAME, ACTIVATION_KEY, PRICE, PRIORITY)" \
-        "VALUES (\"{}\", \"{}\", \"{}\", {}, {})",
+    std::string query = std::format("INSERT INTO token(STATUS, ID, NAME, ACTIVATION_KEY, PRICE, PRIORITY)" \
+        "VALUES ({}, \"{}\", \"{}\", \"{}\", {}, {})",
+        token.status,
         token.id,
         token.name,
         token.key,
@@ -39,7 +41,8 @@ std::optional<const std::string> DBConnection::insert_tokens(const std::unordere
         if (!values.empty()) {
             values += ",";
         }
-        values += std::format("(\"{}\", \"{}\", \"{}\", {}, {})",
+        values += std::format("({}, \"{}\", \"{}\", \"{}\", {}, {})",
+            token.status,
             token.id,
             token.name,
             token.key,
@@ -47,7 +50,29 @@ std::optional<const std::string> DBConnection::insert_tokens(const std::unordere
             token.priority
         );
     } 
-    return execute_query(std::format("INSERT INTO token(ID, NAME, ACTIVATION_KEY, PRICE, PRIORITY) VALUES {};", values));
+    return execute_query(std::format("INSERT INTO token(STATUS, ID, NAME, ACTIVATION_KEY, PRICE, PRIORITY) VALUES {};", values));
+}
+
+std::optional<const std::string> DBConnection::update_token(const Token& token)
+{
+    std::string query = std::format(
+        "UPDATE token SET " \
+            "STATUS = {0},"
+            "ID = \"{1}\"," \
+            "NAME = \"{2}\"," \
+            "ACTIVATION_KEY = \"{3}\"," \
+            "PRICE = {4}," \
+            "PRIORITY = {5} " \
+        "WHERE ID = \"{1}\";", \
+            token.status,
+            token.id, 
+            token.name, 
+            token.key, 
+            token.price, 
+            token.priority
+    );
+
+    return execute_query(query);
 }
 
 std::unordered_map<std::string, Token> DBConnection::select_tokens(const std::string& condition)

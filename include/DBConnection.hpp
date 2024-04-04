@@ -27,7 +27,7 @@ protected:
     {
         int error_code = sqlite3_open("test.db", &m_sqlite);
         if (error_code != 0) {
-            throw std::runtime_error(std::format("Failed to open data base, error: {}", sqlite3_errmsg(m_sqlite)));
+            throw std::runtime_error(std::format("Failed to open database, error: {}", sqlite3_errmsg(m_sqlite)));
         }
     }
 
@@ -37,7 +37,7 @@ public:
     {
         if (m_dbConn == nullptr) {
             m_dbConn = std::shared_ptr<DBConnection>(new DBConnection());
-            spdlog::info("Data base connection opened successfully");
+            spdlog::info("Database connection opened successfully");
         }
 
         return m_dbConn;
@@ -46,6 +46,7 @@ public:
     std::optional<const std::string> create_token_table();
     std::optional<const std::string> insert_token(const Token&);
     std::optional<const std::string> insert_tokens(const std::unordered_map<std::string, Token>&);
+    std::optional<const std::string> update_token(const Token&);
     std::unordered_map<std::string, Token> select_tokens(const std::string& condition = "");
 
 private:

@@ -4,7 +4,8 @@ namespace DB {
 
 enum Token
 {
-    ID = 0,
+    STATUS = 0,
+    ID,
     NAME,
     KEY,
     PRICE,

@@ -15,6 +15,7 @@ const std::optional<const std::string> TokenStorage::load_from_file(const std::s
         }
 
         Token token;
+        token.status = status;
         token.id = doc.GetCell<std::string>(ID, row);
         token.name = doc.GetCell<std::string>(NAME, row);
         token.key = doc.GetCell<std::string>(KEY, row);
@@ -25,8 +26,7 @@ const std::optional<const std::string> TokenStorage::load_from_file(const std::s
     }
 
     if (auto error = DBConnection::get_conn()->insert_tokens(m_tokens); error.has_value()) {
-        spdlog::error(error.value());
-        return error;
+        return std::format("load_from_file: {}", error.value());
     }
 
     m_randomizer.load_ids(m_tokens);
@@ -35,7 +35,7 @@ const std::optional<const std::string> TokenStorage::load_from_file(const std::s
 
 const std::optional<const std::string> TokenStorage::load_from_db()
 {   
-    auto tokens = DBConnection::get_conn()->select_tokens();
+    auto tokens = DBConnection::get_conn()->select_tokens(std::format("STATUS = {}", int(ACTIVE)));
     if (tokens.empty()) {
         return "load_from_db: failed to load tokens";
     }
@@ -61,8 +61,16 @@ const std::optional<const std::string> TokenStorage::play(const std::string& use
     return tokenIt->second.name;
 }
 
-const std::optional<const std::string> TokenStorage::remove_from_random(const Token& token)
-{
+const std::optional<const std::string> TokenStorage::deactivate(Token token)
+{   
+    token.status = INACTIVE;
+    auto error = DBConnection::get_conn()->update_token(token);
+    if (error.has_value()) {
+        return std::format("deactivate: {}", error.value());
+    }
+
+    m_tokens.erase(token.id);
+    spdlog::info("{} is deactivated and removed from random", token.name);
     return std::nullopt;
 }
 

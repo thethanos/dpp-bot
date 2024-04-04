@@ -20,6 +20,7 @@ enum Columns
 
 struct Token
 {   
+    size_t status;
     std::string id;
     std::string name;
     std::string key;
