@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TokenStorage.hpp"
+#include "EventParser.hpp"
 
 #include <dpp/dpp.h>
 
@@ -14,9 +15,16 @@ public:
     void init_handlers();
     void start() { m_bot.start(dpp::st_wait); }
 
+private:
     void handle_ready(const dpp::ready_t& event);
     void handle_slashcommand(const dpp::slashcommand_t& event);
     void handle_button_click(const dpp::button_click_t& event);
+
+    void on_slashcommand_random(const dpp::slashcommand_t& event);
+    void on_slashcommand_games(const dpp::slashcommand_t& event);
+
+    void on_button_click_get_prize(const dpp::button_click_t& event, const IdType& event_target);
+    void on_button_click_games(const dpp::button_click_t& event);
 
 private:
     dpp::cluster m_bot;

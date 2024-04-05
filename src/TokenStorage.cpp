@@ -45,7 +45,7 @@ const std::optional<const std::string> TokenStorage::load_from_db()
     return std::nullopt;
 }
 
-const std::optional<const std::string> TokenStorage::play(const std::string& user_id)
+const std::optional<const Token> TokenStorage::play()
 {
     auto id = m_randomizer.get_random_id();
     if (!id.has_value()) {
@@ -56,9 +56,8 @@ const std::optional<const std::string> TokenStorage::play(const std::string& use
     if (tokenIt == m_tokens.end()) {
         return std::nullopt;
     }
-        
-    m_winners[user_id] = tokenIt->second;
-    return tokenIt->second.name;
+
+    return tokenIt->second;
 }
 
 const std::optional<const std::string> TokenStorage::deactivate(Token token)
@@ -74,12 +73,23 @@ const std::optional<const std::string> TokenStorage::deactivate(Token token)
     return std::nullopt;
 }
 
-const std::optional<Token> TokenStorage::get_prize(const std::string& user_id)
+const std::optional<Token> TokenStorage::get_prize(const std::string& game_id)
 {
-    auto prizeIt = m_winners.find(user_id);
-    if (prizeIt == m_winners.end()) {
+    auto tokenIt = m_tokens.find(game_id);
+    if (tokenIt == m_tokens.end()) {
         return std::nullopt;
     }
 
-    return prizeIt->second;
+    return tokenIt->second;
+}
+
+const std::vector<Token> TokenStorage::get_available_games()
+{
+    auto tokens_map = DBConnection::get_conn()->select_tokens(std::format("STATUS = {}", int(ACTIVE)));
+    std::vector<Token> tokens;
+    for (auto [id, token] : tokens_map) {
+        tokens.push_back(token);
+    }
+    
+    return tokens;
 }

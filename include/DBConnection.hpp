@@ -44,9 +44,9 @@ public:
     }
 
     std::optional<const std::string> create_token_table();
-    std::optional<const std::string> insert_token(const Token&);
-    std::optional<const std::string> insert_tokens(const std::unordered_map<std::string, Token>&);
-    std::optional<const std::string> update_token(const Token&);
+    std::optional<const std::string> insert_token(const Token& token);
+    std::optional<const std::string> insert_tokens(const std::unordered_map<std::string, Token>& token);
+    std::optional<const std::string> update_token(const Token& token);
     std::unordered_map<std::string, Token> select_tokens(const std::string& condition = "");
 
 private:
