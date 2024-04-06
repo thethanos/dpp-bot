@@ -82,9 +82,13 @@ void BotHandler::handle_button_click(const dpp::button_click_t& event)
     }
 
     if (name == "games") {
-        spdlog::info(event.raw_event);
         on_button_click_games(event);
     }
+}
+
+void BotHandler::handle_message_received(const dpp::message_create_t& event)
+{
+    
 }
 
 void BotHandler::on_slashcommand_random(const dpp::slashcommand_t& event) 
@@ -113,39 +117,7 @@ void BotHandler::on_slashcommand_random(const dpp::slashcommand_t& event)
 
 void BotHandler::on_slashcommand_games(const dpp::slashcommand_t& event)
 {
-    auto tokens = m_tokens.get_available_games();
 
-    std::string list;
-    std::vector<dpp::embed> embeds;
-    for (int index(0); index < tokens.size(); index++) {
-        list.append(std::format("{}\n", tokens[index].name));
-        if (((index % 10) == 0 && index != 0) || index == tokens.size() - 1) {
-            dpp::embed embed;
-            embed.set_title("List of available games");
-            embed.set_description(list);
-            embeds.push_back(embed);
-            list.clear();
-        }
-    }
-    int current_page = 1;
-
-    dpp::message msg(event.command.channel_id, embeds[current_page - 1]);
-	msg.add_component(
-    dpp::component().add_component(
-        dpp::component()
-            .set_label("Prev")
-            .set_style(dpp::cos_primary)
-            .set_id("prev")
-        )
-    .add_component(
-        dpp::component()
-            .set_label("Next")
-            .set_style(dpp::cos_primary)
-            .set_id("next")
-        )
-    );
-        
-    event.reply(msg);
 }
 
 void BotHandler::on_button_click_get_prize(const dpp::button_click_t& event, const IdType& event_target)

@@ -19,6 +19,7 @@ private:
     void handle_ready(const dpp::ready_t& event);
     void handle_slashcommand(const dpp::slashcommand_t& event);
     void handle_button_click(const dpp::button_click_t& event);
+    void handle_message_received(const dpp::message_create_t& event);
 
     void on_slashcommand_random(const dpp::slashcommand_t& event);
     void on_slashcommand_games(const dpp::slashcommand_t& event);
