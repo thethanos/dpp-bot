@@ -6,12 +6,17 @@
 int BotHandler::init_data(const std::string& path_to_keys)
 {
     if (auto error = DBConnection::get_conn()->create_token_table(); error.has_value()) {
-        spdlog::error(error.value());
+        spdlog::error(std::format("init_data: {}", error.value()));
+        return -1;
+    }
+
+    if (auto error = DBConnection::get_conn()->create_user_score_table(); error.has_value()) {
+        spdlog::error(std::format("init_data: {}", error.value()));
         return -1;
     }
 
     if (auto error = m_tokens.load_from_db(); error.has_value()) {
-        spdlog::error(error.value());
+        spdlog::error(std::format("init_data: {}", error.value()));
     }
     
     if (m_tokens.empty()) {
@@ -45,6 +50,7 @@ void BotHandler::init_handlers()
     m_bot.on_ready(std::bind(&BotHandler::handle_ready, this, std::placeholders::_1));
     m_bot.on_slashcommand(std::bind(&BotHandler::handle_slashcommand, this, std::placeholders::_1));
     m_bot.on_button_click(std::bind(&BotHandler::handle_button_click, this, std::placeholders::_1));
+    m_bot.on_message_create(std::bind(&BotHandler::handle_message_received, this, std::placeholders::_1));
 }
 
 void BotHandler::handle_ready(const dpp::ready_t& event)
@@ -87,12 +93,22 @@ void BotHandler::handle_button_click(const dpp::button_click_t& event)
 }
 
 void BotHandler::handle_message_received(const dpp::message_create_t& event)
-{
-    
+{   
+    auto user_id = event.msg.author.id.str();
+    m_users.add_score(user_id, 1);
 }
 
 void BotHandler::on_slashcommand_random(const dpp::slashcommand_t& event) 
 {
+    auto user_id = event.command.usr.id.str();
+    auto user_score = m_users.get_score(user_id);
+    if (!user_score.has_value() || user_score.value() == 0) {
+        event.reply("Sorry, your balance is 0. Please try again later.");
+        return;
+    }
+
+    m_users.remove_score(user_id, 1);
+
     std::optional<const Token> game = m_tokens.play();
     if (!game.has_value()) {
         spdlog::error("TokenStorage returned no keys");

@@ -2,15 +2,26 @@
 
 namespace DB {
 
-enum Token
+namespace Token {
+    enum 
+    {
+        STATUS = 0,
+        ID,
+        NAME,
+        KEY,
+        PRICE,
+        PRIORITY,
+        COLUMN_COUNT //not used in the actual table
+    };
+};
+
+namespace UserScore
 {
-    STATUS = 0,
-    ID,
-    NAME,
-    KEY,
-    PRICE,
-    PRIORITY,
-    COLUMN_COUNT //not used in the actual table
+    enum {
+        ID = 0,
+        SCORE,
+        COLUMN_COUNT //not used in the actual table
+    };
 };
 
 };

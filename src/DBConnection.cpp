@@ -19,6 +19,16 @@ std::optional<const std::string> DBConnection::create_token_table()
     return execute_query(query);
 }
 
+std::optional<const std::string> DBConnection::create_user_score_table()
+{
+    const std::string query = "CREATE TABLE IF NOT EXISTS user_score(" \
+        "ID CHAR(20) PRIMARY KEY NOT NULL," \
+        "SCORE INT NOT NULL" \
+    ");"; 
+
+    return execute_query(query);
+}
+
 std::optional<const std::string> DBConnection::insert_token(const Token& token)
 {
     std::string query = std::format("INSERT INTO token(STATUS, ID, NAME, ACTIVATION_KEY, PRICE, PRIORITY)" \
@@ -53,6 +63,16 @@ std::optional<const std::string> DBConnection::insert_tokens(const std::unordere
     return execute_query(std::format("INSERT INTO token(STATUS, ID, NAME, ACTIVATION_KEY, PRICE, PRIORITY) VALUES {};", values));
 }
 
+std::optional<const std::string> DBConnection::insert_user(const std::string& user_id)
+{
+    std::string query = std::format("INSERT INTO user_score(ID, SCORE) VALUES(\"{}\", {});",
+        user_id,
+        0
+    );
+
+    return execute_query(query);
+}
+
 std::optional<const std::string> DBConnection::update_token(const Token& token)
 {
     std::string query = std::format(
@@ -75,6 +95,16 @@ std::optional<const std::string> DBConnection::update_token(const Token& token)
     return execute_query(query);
 }
 
+std::optional<const std::string> DBConnection::update_user_score(const std::string& user_id, size_t score)
+{
+    std::string query = std::format("UPDATE user_score SET ID = \"{}\", SCORE = {}",
+        user_id,
+        score
+    );
+
+    return execute_query(query);
+}
+
 std::unordered_map<std::string, Token> DBConnection::select_tokens(const std::string& condition)
 {  
     std::unordered_map<std::string, Token> tokens; 
@@ -86,17 +116,17 @@ std::unordered_map<std::string, Token> DBConnection::select_tokens(const std::st
         query = "SELECT * FROM token;";
     }
 
-    sqlite3_stmt* stmt;
+    sqlite3_stmt* stmt = nullptr;
     auto error_code = sqlite3_prepare_v2(m_sqlite, query.c_str(), -1, &stmt, nullptr);
     if (error_code != SQLITE_OK) {
-        spdlog::error(sqlite3_errmsg(m_sqlite));
+        spdlog::error(std::format("select_tokens: {}", sqlite3_errmsg(m_sqlite)));
         return tokens;
     }
 
     while(true) {
         int error_code = sqlite3_step(stmt);
         if (error_code == SQLITE_ERROR) {
-            spdlog::error(sqlite3_errmsg(m_sqlite));
+            spdlog::error(std::format("select_tokens: {}", sqlite3_errmsg(m_sqlite)));
             return tokens;
         }
 
@@ -105,16 +135,37 @@ std::unordered_map<std::string, Token> DBConnection::select_tokens(const std::st
         }
 
         Token token;
-        token.id = reinterpret_cast<const char*>(sqlite3_column_text(stmt, DB::ID));
-        token.name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, DB::NAME));
-        token.key = reinterpret_cast<const char*>(sqlite3_column_text(stmt, DB::KEY));
-        token.price = sqlite3_column_double(stmt, DB::PRICE);
-        token.priority = sqlite3_column_int(stmt, DB::PRIORITY);
+        token.id = reinterpret_cast<const char*>(sqlite3_column_text(stmt, DB::Token::ID));
+        token.name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, DB::Token::NAME));
+        token.key = reinterpret_cast<const char*>(sqlite3_column_text(stmt, DB::Token::KEY));
+        token.price = sqlite3_column_double(stmt, DB::Token::PRICE);
+        token.priority = sqlite3_column_int(stmt, DB::Token::PRIORITY);
 
         tokens[token.id] = token;
     }
 
     return tokens;
+}
+
+std::optional<size_t> DBConnection::select_user_score(const std::string& user_id)
+{
+    std::string query = std::format("SELECT * FROM user_score WHERE ID = \"{}\"", user_id);
+    
+    sqlite3_stmt* stmt = nullptr;
+    auto error_code = sqlite3_prepare_v2(m_sqlite, query.c_str(), -1, &stmt, nullptr);
+    if (error_code != SQLITE_OK) {
+        spdlog::error(std::format("select_user_score: {}", sqlite3_errmsg(m_sqlite)));
+        return std::nullopt;
+    }
+
+    error_code = sqlite3_step(stmt);
+    if (error_code == SQLITE_ERROR) {
+        spdlog::error(std::format("select_user_score: {}", sqlite3_errmsg(m_sqlite)));
+        return std::nullopt;
+    }
+
+    size_t score = sqlite3_column_int(stmt, DB::UserScore::SCORE);
+    return std::nullopt;
 }
 
 std::optional<const std::string> DBConnection::execute_query(const std::string& query, Callback callback)

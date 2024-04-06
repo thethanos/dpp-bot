@@ -2,13 +2,15 @@
 
 #include "TokenStorage.hpp"
 #include "EventParser.hpp"
+#include "UserDataStorage.hpp"
 
 #include <dpp/dpp.h>
 
 class BotHandler
 {
 public:
-    BotHandler(const std::string& token):m_bot(token) {}
+    BotHandler(const std::string& token):m_bot(token, dpp::i_message_content) {
+    }
 
 public:
     int init_data(const std::string& path_to_keys = "");
@@ -30,4 +32,5 @@ private:
 private:
     dpp::cluster m_bot;
     TokenStorage m_tokens;
+    UserDataStorage m_users;
 };
