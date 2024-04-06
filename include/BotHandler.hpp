@@ -9,7 +9,12 @@
 class BotHandler
 {
 public:
-    BotHandler(const std::string& token):m_bot(token, dpp::i_message_content) {
+    BotHandler(const std::string& token):m_bot(token, 
+        dpp::i_message_content | 
+        dpp::i_guilds | 
+        dpp::i_guild_members | 
+        dpp::i_guild_messages) 
+    {
     }
 
 public:

@@ -164,8 +164,7 @@ std::optional<size_t> DBConnection::select_user_score(const std::string& user_id
         return std::nullopt;
     }
 
-    size_t score = sqlite3_column_int(stmt, DB::UserScore::SCORE);
-    return std::nullopt;
+    return sqlite3_column_int(stmt, DB::UserScore::SCORE);
 }
 
 std::optional<const std::string> DBConnection::execute_query(const std::string& query, Callback callback)

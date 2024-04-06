@@ -4,7 +4,7 @@
 void UserDataStorage::add_score(const std::string& user_id, size_t score)
 {
     m_user_score[user_id]+= score;
-    if (m_user_score[user_id] >= 10) {
+    if ((m_user_score[user_id] % 10) == 1) {
         update_database(user_id);
     }
 }
