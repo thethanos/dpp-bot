@@ -5,13 +5,13 @@
 
 int BotHandler::init_data(const std::string& path_to_keys)
 {
-    if (auto error = DBConnection::get_conn()->create_token_table(); error.has_value()) {
-        spdlog::error(std::format("create_token_table: {}", error.value()));
+    if (auto error = m_tokens.create_table(); error.has_value()) {
+        spdlog::error(std::format("create_table: {}", error.value()));
         return -1;
     }
 
-    if (auto error = DBConnection::get_conn()->create_user_score_table(); error.has_value()) {
-        spdlog::error(std::format("create_user_score_table: {}", error.value()));
+    if (auto error = m_users.create_table(); error.has_value()) {
+        spdlog::error(std::format("create_table: {}", error.value()));
         return -1;
     }
 

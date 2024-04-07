@@ -9,32 +9,38 @@ RUN apt-get update && \
 ENV CC=/usr/bin/gcc-13
 ENV CXX=/usr/bin/g++-13
 
+# install spdlog https://github.com/gabime/spdlog.git
 WORKDIR /usr/src/spdlog
-
 COPY spdlog/ .
-
 WORKDIR /usr/src/spdlog/build
 
 RUN cmake .. -DCMAKE_INSTALL_PREFIX=/usr
 RUN make -j 6
 RUN make install
 
+# install DPP https://github.com/brainboxdotcc/DPP.git
 WORKDIR /usr/src/DPP
-
 COPY DPP/ .
-
 WORKDIR /usr/src/DPP/build
 
 RUN cmake .. -DDPP_BUILD_TEST=OFF
 RUN make -j 6
 RUN make install
 
+# install SQLite https://www.sqlite.org/src/tarball/sqlite.tar.gz
 WORKDIR /usr/src/sqlite
-
 COPY sqlite/ .
-
 WORKDIR /usr/src/sqlite/build
 
 RUN ../configure --prefix=/usr
+RUN make -j 6
+RUN make install
+
+# install google test https://github.com/google/googletest.git
+WORKDIR /usr/src/googletest
+COPY googletest/ .
+WORKDIR /usr/src/googletest/build
+
+RUN cmake .. -DCMAKE_INSTALL_PREFIX=/usr
 RUN make -j 6
 RUN make install

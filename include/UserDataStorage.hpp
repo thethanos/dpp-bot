@@ -7,6 +7,7 @@
 class UserDataStorage
 {
 public:
+    const std::optional<const std::string> create_table();
     void add_score(const std::string& user_id, size_t score);
     void remove_score(const std::string& user_id, size_t score);
     const std::optional<size_t> get_score(const std::string& user_id);

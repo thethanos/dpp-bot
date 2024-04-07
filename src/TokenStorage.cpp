@@ -1,5 +1,12 @@
 #include "TokenStorage.hpp"
 
+const std::optional<const std::string> TokenStorage::create_table()
+{
+    if (auto error = DBConnection::get_conn()->create_token_table(); error.has_value()) {
+        return std::format("create_token_table: {}", error.value());
+    }
+}
+
 const std::optional<const std::string> TokenStorage::load_from_file(const std::string& path) 
 {   
     rapidcsv::Document doc(path, rapidcsv::LabelParams(-1, -1));

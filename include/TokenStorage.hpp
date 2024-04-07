@@ -10,6 +10,7 @@
 class TokenStorage
 {
 public:
+    const std::optional<const std::string> create_table();
     const std::optional<const std::string> load_from_file(const std::string& path);
     const std::optional<const std::string> load_from_db();
 
