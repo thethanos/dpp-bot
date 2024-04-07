@@ -4,7 +4,7 @@ const std::optional<const std::string> TokenStorage::load_from_file(const std::s
 {   
     rapidcsv::Document doc(path, rapidcsv::LabelParams(-1, -1));
     if (doc.GetRowCount() == 0) {
-        return std::format("load_from_file: {}; The file is empty", path);
+        return std::format("GetRowCount: {}; The file is empty", path);
     }
 
     for (size_t row(0); row < doc.GetRowCount(); row++) 
@@ -26,7 +26,7 @@ const std::optional<const std::string> TokenStorage::load_from_file(const std::s
     }
 
     if (auto error = DBConnection::get_conn()->insert_tokens(m_tokens); error.has_value()) {
-        return std::format("load_from_file: {}", error.value());
+        return std::format("insert_tokens: {}", error.value());
     }
 
     m_randomizer.load_ids(m_tokens);
@@ -37,7 +37,7 @@ const std::optional<const std::string> TokenStorage::load_from_db()
 {   
     auto tokens = DBConnection::get_conn()->select_tokens(std::format("STATUS = {}", int(ACTIVE)));
     if (tokens.empty()) {
-        return "load_from_db: failed to load tokens";
+        return "select_tokens: failed to load tokens";
     }
 
     m_tokens = std::move(tokens);
@@ -65,7 +65,7 @@ const std::optional<const std::string> TokenStorage::deactivate(Token token)
     token.status = INACTIVE;
     auto error = DBConnection::get_conn()->update_token(token);
     if (error.has_value()) {
-        return std::format("deactivate: {}", error.value());
+        return std::format("update_token: {}", error.value());
     }
 
     m_tokens.erase(token.id);

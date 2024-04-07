@@ -16,6 +16,7 @@ std::optional<const std::string> DBConnection::create_token_table()
         "PRIORITY INT NOT NULL" \
     ");";
 
+    std::lock_guard guard{m_token_mutex};
     return execute_query(query);
 }
 
@@ -26,6 +27,7 @@ std::optional<const std::string> DBConnection::create_user_score_table()
         "SCORE INT NOT NULL" \
     ");"; 
 
+    std::lock_guard guard{m_user_score_mutex};
     return execute_query(query);
 }
 
@@ -41,6 +43,7 @@ std::optional<const std::string> DBConnection::insert_token(const Token& token)
         token.priority
     );
 
+    std::lock_guard guard{m_token_mutex};
     return execute_query(query);
 }
 
@@ -59,7 +62,9 @@ std::optional<const std::string> DBConnection::insert_tokens(const std::unordere
             token.price,
             token.priority
         );
-    } 
+    }
+
+    std::lock_guard guard{m_token_mutex};
     return execute_query(std::format("INSERT INTO token(STATUS, ID, NAME, ACTIVATION_KEY, PRICE, PRIORITY) VALUES {};", values));
 }
 
@@ -70,6 +75,7 @@ std::optional<const std::string> DBConnection::insert_user(const std::string& us
         0
     );
 
+    std::lock_guard guard{m_user_score_mutex};
     return execute_query(query);
 }
 
@@ -92,6 +98,7 @@ std::optional<const std::string> DBConnection::update_token(const Token& token)
             token.priority
     );
 
+    std::lock_guard guard{m_token_mutex};
     return execute_query(query);
 }
 
@@ -102,6 +109,7 @@ std::optional<const std::string> DBConnection::update_user_score(const std::stri
         score
     );
 
+    std::lock_guard guard{m_user_score_mutex};
     return execute_query(query);
 }
 
@@ -119,14 +127,15 @@ std::unordered_map<std::string, Token> DBConnection::select_tokens(const std::st
     sqlite3_stmt* stmt = nullptr;
     auto error_code = sqlite3_prepare_v2(m_sqlite, query.c_str(), -1, &stmt, nullptr);
     if (error_code != SQLITE_OK) {
-        spdlog::error(std::format("select_tokens: {}", sqlite3_errmsg(m_sqlite)));
+        spdlog::error(std::format("sqlite3_prepare_v2: {}", sqlite3_errmsg(m_sqlite)));
         return tokens;
     }
 
+    std::lock_guard guard{m_token_mutex};
     while(true) {
         int error_code = sqlite3_step(stmt);
         if (error_code == SQLITE_ERROR) {
-            spdlog::error(std::format("select_tokens: {}", sqlite3_errmsg(m_sqlite)));
+            spdlog::error(std::format("sqlite3_step: {}", sqlite3_errmsg(m_sqlite)));
             return tokens;
         }
 
@@ -154,13 +163,14 @@ std::optional<size_t> DBConnection::select_user_score(const std::string& user_id
     sqlite3_stmt* stmt = nullptr;
     auto error_code = sqlite3_prepare_v2(m_sqlite, query.c_str(), -1, &stmt, nullptr);
     if (error_code != SQLITE_OK) {
-        spdlog::error(std::format("select_user_score: {}", sqlite3_errmsg(m_sqlite)));
+        spdlog::error(std::format("sqlite3_prepare_v2: {}", sqlite3_errmsg(m_sqlite)));
         return std::nullopt;
     }
 
+    std::lock_guard guard{m_user_score_mutex};
     error_code = sqlite3_step(stmt);
     if (error_code == SQLITE_ERROR) {
-        spdlog::error(std::format("select_user_score: {}", sqlite3_errmsg(m_sqlite)));
+        spdlog::error(std::format("sqlite3_step: {}", sqlite3_errmsg(m_sqlite)));
         return std::nullopt;
     }
 
@@ -173,7 +183,7 @@ std::optional<const std::string> DBConnection::execute_query(const std::string& 
 
     int error_code = sqlite3_exec(m_sqlite, query.c_str(), callback, nullptr, nullptr);
     if (error_code != SQLITE_OK) {
-        spdlog::error(sqlite3_errmsg(m_sqlite));
+        spdlog::error("execute_query: {}", sqlite3_errmsg(m_sqlite));
         return sqlite3_errmsg(m_sqlite);
     }
 

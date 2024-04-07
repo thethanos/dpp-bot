@@ -6,17 +6,17 @@
 int BotHandler::init_data(const std::string& path_to_keys)
 {
     if (auto error = DBConnection::get_conn()->create_token_table(); error.has_value()) {
-        spdlog::error(std::format("init_data: {}", error.value()));
+        spdlog::error(std::format("create_token_table: {}", error.value()));
         return -1;
     }
 
     if (auto error = DBConnection::get_conn()->create_user_score_table(); error.has_value()) {
-        spdlog::error(std::format("init_data: {}", error.value()));
+        spdlog::error(std::format("create_user_score_table: {}", error.value()));
         return -1;
     }
 
     if (auto error = m_tokens.load_from_db(); error.has_value()) {
-        spdlog::error(std::format("init_data: {}", error.value()));
+        spdlog::error(std::format("load_from_db: {}", error.value()));
     }
     
     if (m_tokens.empty()) {
@@ -58,6 +58,7 @@ void BotHandler::handle_ready(const dpp::ready_t& event)
     if (dpp::run_once<struct register_bot_commands>()) {
         m_bot.global_command_create(dpp::slashcommand("random", "Get random key!", m_bot.me.id));
         m_bot.global_command_create(dpp::slashcommand("games", "Get list of available games", m_bot.me.id));
+        m_bot.global_command_create(dpp::slashcommand("score", "Get your balance", m_bot.me.id));
     }
 }
 
@@ -72,13 +73,17 @@ void BotHandler::handle_slashcommand(const dpp::slashcommand_t& event)
     if (command_name == "games") {
         on_slashcommand_games(event);
     }
+
+    if (command_name == "score") {
+        on_slashcommand_score(event);
+    }
 }
 
 void BotHandler::handle_button_click(const dpp::button_click_t& event)
 {
     const auto meta = get_event_meta(event);
     if (!meta.has_value()) {
-        spdlog::error("handle_button_click: failed to aquire event meta");
+        spdlog::error("get_event_meta: failed to aquire event meta");
         return;
     }
 
@@ -133,7 +138,20 @@ void BotHandler::on_slashcommand_random(const dpp::slashcommand_t& event)
 
 void BotHandler::on_slashcommand_games(const dpp::slashcommand_t& event)
 {
+    
+}
 
+void BotHandler::on_slashcommand_score(const dpp::slashcommand_t& event)
+{
+    auto user_id = event.command.usr.id.str();
+    auto user_score = m_users.get_score(user_id);
+    if (!user_score.has_value()) {
+        spdlog::error("get_score: empty score value returned");
+        event.reply("Sorry, something went wrong. Please try again later.");
+        return;
+    }
+
+    event.reply(dpp::message(std::format("You have {} points.", user_score.value())));
 }
 
 void BotHandler::on_button_click_get_prize(const dpp::button_click_t& event, const IdType& event_target)
@@ -146,7 +164,7 @@ void BotHandler::on_button_click_get_prize(const dpp::button_click_t& event, con
 
     auto token = m_tokens.get_prize(event.custom_id);
     if (!token.has_value()) {
-        spdlog::error("Failed to retrieve token by id");
+        spdlog::error("get_prize: failed to retrieve token by id");
         m_bot.message_create(dpp::message(event.command.channel_id, "Unknown error. Please try again later"));
         event.reply();
         event.delete_original_response();

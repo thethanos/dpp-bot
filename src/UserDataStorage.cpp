@@ -4,9 +4,6 @@
 void UserDataStorage::add_score(const std::string& user_id, size_t score)
 {
     m_user_score[user_id]+= score;
-    if ((m_user_score[user_id] % 10) == 1) {
-        update_database(user_id);
-    }
 }
 
 void UserDataStorage::remove_score(const std::string& user_id, size_t score)
@@ -22,7 +19,11 @@ void UserDataStorage::remove_score(const std::string& user_id, size_t score)
 
 const std::optional<size_t> UserDataStorage::get_score(const std::string& user_id)
 {
-    return DBConnection::get_conn()->select_user_score(user_id);
+    if (auto error = update_database(user_id); error.has_value()) {
+        spdlog::error("update_database : {}", error.value());
+        return std::nullopt;
+    }
+    return m_user_score[user_id];
 }
 
 const std::optional<const std::string> UserDataStorage::update_database(const std::string& user_id)

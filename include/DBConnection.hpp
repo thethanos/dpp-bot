@@ -8,6 +8,7 @@
 #include <exception> 
 #include <memory>
 #include <format>
+#include <mutex>
 #include <optional>
 #include <functional>
 #include <unordered_map>
@@ -57,6 +58,8 @@ private:
     std::optional<const std::string> execute_query(const std::string&, Callback callback = nullptr);
 
 private:
+    std::mutex m_token_mutex;
+    std::mutex m_user_score_mutex;
     sqlite3* m_sqlite{nullptr};
     static std::shared_ptr<DBConnection> m_dbConn;
 };
