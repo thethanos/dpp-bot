@@ -204,6 +204,7 @@ void BotHandler::on_button_click_games(const dpp::button_click_t& event)
     auto list = m_tokens.get_list_page(event.custom_id);
     if (!list.has_value()) {
         event.reply();
+        return;
     }
 
     dpp::embed embed;
@@ -212,5 +213,5 @@ void BotHandler::on_button_click_games(const dpp::button_click_t& event)
     auto msg = make_game_list_message(embed);
 
     m_slashcommand_events["games"].edit_response(msg);
-    //event.reply();
+    event.reply();
 }

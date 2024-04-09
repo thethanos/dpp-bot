@@ -28,6 +28,7 @@ private:
 private:
     Randomizer m_randomizer;
     std::unordered_map<std::string, Token> m_tokens;
-    std::vector<std::string> m_token_namse;
+    std::vector<std::string> m_token_name_pages;
     int m_page_cursor = 0;
+    std::mutex m_mutex;
 };
