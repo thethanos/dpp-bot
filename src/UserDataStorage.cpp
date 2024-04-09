@@ -6,6 +6,8 @@ const std::optional<const std::string> UserDataStorage::create_table()
     if (auto error = DBConnection::get_conn()->create_user_score_table(); error.has_value()) {
         return std::format("create_user_score_table: {}", error.value());
     }
+
+    return std::nullopt;
 }
 
 void UserDataStorage::add_score(const std::string& user_id, size_t score)

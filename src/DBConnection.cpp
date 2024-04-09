@@ -119,7 +119,7 @@ std::unordered_map<std::string, Token> DBConnection::select_tokens(const std::st
     
     std::string query;
     if (!condition.empty()) {
-        query = std::format("SELECT * FROM token WHERE {};", condition);
+        query = std::format("SELECT * FROM token {};", condition);
     } else {
         query = "SELECT * FROM token;";
     }

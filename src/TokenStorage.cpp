@@ -1,10 +1,14 @@
 #include "TokenStorage.hpp"
 
+#include <algorithm>
+
 const std::optional<const std::string> TokenStorage::create_table()
 {
     if (auto error = DBConnection::get_conn()->create_token_table(); error.has_value()) {
         return std::format("create_token_table: {}", error.value());
     }
+
+    return std::nullopt;
 }
 
 const std::optional<const std::string> TokenStorage::load_from_file(const std::string& path) 
@@ -42,7 +46,7 @@ const std::optional<const std::string> TokenStorage::load_from_file(const std::s
 
 const std::optional<const std::string> TokenStorage::load_from_db()
 {   
-    auto tokens = DBConnection::get_conn()->select_tokens(std::format("STATUS = {}", int(ACTIVE)));
+    auto tokens = DBConnection::get_conn()->select_tokens(std::format("WHERE STATUS = {}", int(ACTIVE)));
     if (tokens.empty()) {
         return "select_tokens: failed to load tokens";
     }
@@ -90,13 +94,54 @@ const std::optional<Token> TokenStorage::get_prize(const std::string& game_id)
     return tokenIt->second;
 }
 
-const std::vector<Token> TokenStorage::get_available_games()
+const std::optional<const std::string> TokenStorage::get_list_page(const std::string& direction)
 {
-    auto tokens_map = DBConnection::get_conn()->select_tokens(std::format("STATUS = {}", int(ACTIVE)));
-    std::vector<Token> tokens;
-    for (auto [id, token] : tokens_map) {
-        tokens.push_back(token);
+    if (m_page_cursor == 0 || m_tokens.empty()) {
+        if (auto error = update_available_games(); error.has_value()) {
+            spdlog::error("update_available_games: {}", error.value());
+            return std::nullopt;
+        }
     }
-    
-    return tokens;
+
+    int offset = 10;
+
+    if (direction.empty()) {
+        m_page_cursor = 0;
+    } else if (direction == "next") {
+        if (m_page_cursor + offset >= m_token_namse.size()) {
+            return std::nullopt;
+        }
+        m_page_cursor += offset;
+    } else {
+        if (m_page_cursor - offset <= 0) {
+            return std::nullopt;
+        }
+        m_page_cursor -= offset;
+    }
+
+    std::vector<std::string> names(offset);
+    std::copy(m_token_namse.begin() + m_page_cursor, m_token_namse.begin() + m_page_cursor + offset, names.begin());
+
+    std::string page;
+    size_t counter = m_page_cursor + 1;
+    for (auto name : names) {
+        if (name.empty()) {
+            break;
+        }
+        page += std::format("{}. {}\n", counter++, name);
+    }
+    return page;
+}
+
+const std::optional<const std::string> TokenStorage::update_available_games()
+{
+    if (m_tokens.empty()) {
+        m_tokens = DBConnection::get_conn()->select_tokens(std::format("WHERE STATUS = {} ORDER BY NAME", int(ACTIVE)));
+    }
+
+    for (auto [id, token] : m_tokens) {
+        m_token_namse.push_back(token.name);
+    }
+
+    return std::nullopt;
 }

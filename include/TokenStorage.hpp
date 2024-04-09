@@ -18,11 +18,16 @@ public:
     const std::optional<const std::string> deactivate(Token token);
     const std::optional<Token> get_prize(const std::string& game_id);    
 
-    const std::vector<Token> get_available_games();
+    const std::optional<const std::string> get_list_page(const std::string& direction);
 
     const bool empty() const { return m_tokens.empty(); }
 
 private:
+    const std::optional<const std::string> update_available_games();
+
+private:
     Randomizer m_randomizer;
     std::unordered_map<std::string, Token> m_tokens;
+    std::vector<std::string> m_token_namse;
+    int m_page_cursor = 0;
 };

@@ -9,12 +9,13 @@
 class BotHandler
 {
 public:
-    BotHandler(const std::string& token):m_bot(token, 
+    BotHandler(const std::string& token):m_bot(token,
         dpp::i_message_content | 
         dpp::i_guilds | 
         dpp::i_guild_members | 
-        dpp::i_guild_messages) 
+        dpp::i_guild_messages)
     {
+
     }
 
 public:
@@ -39,4 +40,6 @@ private:
     dpp::cluster m_bot;
     TokenStorage m_tokens;
     UserDataStorage m_users;
+    dpp::slashcommand_t event;
+    std::unordered_map<std::string, dpp::slashcommand_t> m_slashcommand_events;
 };

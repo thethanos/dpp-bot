@@ -3,14 +3,14 @@
 
 int main(int argc, char** argv) 
 {    
-    const char* token = std::getenv("BOT_TOKEN");
-    if (token == nullptr) {
-        spdlog::error("Could not find the bot token");
+    Config config;
+    if (auto loaded = config.load("config.toml"); !loaded) {
+        spdlog::error("Failed to load config file");
         return -1;
     }
 
-    BotHandler bot(token);
-    bot.init_data("../keys.csv");
+    BotHandler bot(config.token);
+    bot.init_data(config.path_to_keys);
     bot.init_handlers();
     bot.start();
 

@@ -1,5 +1,6 @@
 #include "BotHandler.hpp"
 #include "DBConnection.hpp"
+#include "Message.hpp"
 
 #include <algorithm>
 
@@ -138,7 +139,26 @@ void BotHandler::on_slashcommand_random(const dpp::slashcommand_t& event)
 
 void BotHandler::on_slashcommand_games(const dpp::slashcommand_t& event)
 {
+    if (m_slashcommand_events.contains("gamse")) {
+        m_slashcommand_events["gamse"].delete_original_response();
+        m_slashcommand_events.erase("games");
+    }
+
+    auto list = m_tokens.get_list_page("");
+    if (!list.has_value()) {
+        spdlog::error("Failed to load a page");
+        event.reply(dpp::message("No games available."));
+        return;
+    }
     
+    dpp::embed embed;
+    embed.set_title("Games");
+    embed.set_description(list.value());
+
+    auto msg = make_game_list_message(embed);
+    event.reply(msg);
+
+    m_slashcommand_events["games"] = event;
 }
 
 void BotHandler::on_slashcommand_score(const dpp::slashcommand_t& event)
@@ -181,5 +201,16 @@ void BotHandler::on_button_click_get_prize(const dpp::button_click_t& event, con
 
 void BotHandler::on_button_click_games(const dpp::button_click_t& event)
 {
+    auto list = m_tokens.get_list_page(event.custom_id);
+    if (!list.has_value()) {
+        event.reply();
+    }
 
+    dpp::embed embed;
+    embed.set_title("Games");
+    embed.set_description(list.value());
+    auto msg = make_game_list_message(embed);
+
+    m_slashcommand_events["games"].edit_response(msg);
+    //event.reply();
 }
