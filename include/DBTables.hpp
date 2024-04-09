@@ -2,7 +2,7 @@
 
 namespace DB {
 
-namespace Token {
+namespace Game {
     enum 
     {
         STATUS = 0,

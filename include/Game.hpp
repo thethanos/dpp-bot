@@ -18,7 +18,7 @@ enum Columns
     PRIORITY
 };
 
-struct Token
+struct Game
 {   
     size_t status;
     std::string id;

@@ -4,22 +4,22 @@
 #include <random>
 #include <algorithm>
 
-void Randomizer::load_ids(const std::unordered_map<std::string, Token>& tokens)
+void Randomizer::load_ids(const std::unordered_map<std::string, Game>& games)
 {   
     std::lock_guard guard(m_mutex);
-    m_token_ids.clear();
-    for (auto [id, token] : tokens)
+    m_game_ids.clear();
+    for (auto [id, game] : games)
     {
-        for (size_t count(0); count < token.priority; count++) {
-            m_token_ids.push_back(token.id);
+        for (size_t count(0); count < game.priority; count++) {
+            m_game_ids.push_back(game.id);
         }
     }
 }
 
 std::optional<const std::string> Randomizer::get_random_id()
 {
-    if (m_token_ids.empty()) {
-        spdlog::error("get_random_id: m_token_ids vector is empty");
+    if (m_game_ids.empty()) {
+        spdlog::error("get_random_id: m_game_ids vector is empty");
         return std::nullopt;
     }
 
@@ -28,13 +28,13 @@ std::optional<const std::string> Randomizer::get_random_id()
     generator.seed(rd());
 
     std::lock_guard guard(m_mutex);
-    std::uniform_int_distribution<size_t> distribution(0, m_token_ids.size());
+    std::uniform_int_distribution<size_t> distribution(0, m_game_ids.size());
 
     size_t index = distribution(generator);
-    std::string token_id = m_token_ids[index];
+    std::string game_id = m_game_ids[index];
 
-    auto remove_iter = std::remove(m_token_ids.begin(), m_token_ids.end(), token_id);
-    m_token_ids.erase(remove_iter, m_token_ids.end());
+    auto remove_iter = std::remove(m_game_ids.begin(), m_game_ids.end(), game_id);
+    m_game_ids.erase(remove_iter, m_game_ids.end());
 
-    return token_id;
+    return game_id;
 }

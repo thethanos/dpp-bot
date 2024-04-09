@@ -3,7 +3,7 @@
 #include "sqlite3.h"
 #include "spdlog/spdlog.h"
 
-#include "Token.hpp"
+#include "Game.hpp"
 
 #include <exception> 
 #include <memory>
@@ -44,21 +44,21 @@ public:
         return m_dbConn;
     }
 
-    std::optional<const std::string> create_token_table();
+    std::optional<const std::string> create_game_table();
     std::optional<const std::string> create_user_score_table();
-    std::optional<const std::string> insert_token(const Token& token);
-    std::optional<const std::string> insert_tokens(const std::unordered_map<std::string, Token>& token);
+    std::optional<const std::string> insert_game(const Game& game);
+    std::optional<const std::string> insert_games(const std::unordered_map<std::string, Game>& games);
     std::optional<const std::string> insert_user(const std::string& user_id);
-    std::optional<const std::string> update_token(const Token& token);
+    std::optional<const std::string> update_game(const Game& game);
     std::optional<const std::string> update_user_score(const std::string& user_id, size_t score);
-    std::unordered_map<std::string, Token> select_tokens(const std::string& condition = "");
+    std::unordered_map<std::string, Game> select_games(const std::string& condition = "");
     std::optional<size_t> select_user_score(const std::string& user_id);
 
 private:
     std::optional<const std::string> execute_query(const std::string&, Callback callback = nullptr);
 
 private:
-    std::mutex m_token_mutex;
+    std::mutex m_game_mutex;
     std::mutex m_user_score_mutex;
     sqlite3* m_sqlite{nullptr};
     static std::shared_ptr<DBConnection> m_dbConn;

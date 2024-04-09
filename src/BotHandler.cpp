@@ -6,7 +6,7 @@
 
 int BotHandler::init_data(const std::string& path_to_keys)
 {
-    if (auto error = m_tokens.create_table(); error.has_value()) {
+    if (auto error = m_games.create_table(); error.has_value()) {
         spdlog::error(std::format("create_table: {}", error.value()));
         return -1;
     }
@@ -16,13 +16,13 @@ int BotHandler::init_data(const std::string& path_to_keys)
         return -1;
     }
 
-    if (auto error = m_tokens.load_from_db(); error.has_value()) {
-        spdlog::error(std::format("load_from_db: {}", error.value()));
+    if (auto error = m_games.load_games_from_db(); error.has_value()) {
+        spdlog::error(std::format("load_games_from_db: {}", error.value()));
     }
     
-    if (m_tokens.empty()) {
+    if (m_games.empty()) {
         spdlog::info("init_data: trying to load from file..");
-        if (auto error = m_tokens.load_from_file(path_to_keys); error.has_value()) {
+        if (auto error = m_games.load_games_from_file(path_to_keys); error.has_value()) {
             spdlog::error(error.value());
             return -1;
         }
@@ -115,9 +115,9 @@ void BotHandler::on_slashcommand_random(const dpp::slashcommand_t& event)
 
     m_users.remove_score(user_id, 1);
 
-    std::optional<const Token> game = m_tokens.play();
+    std::optional<const Game> game = m_games.play();
     if (!game.has_value()) {
-        spdlog::error("TokenStorage returned no keys");
+        spdlog::error("GameStorage returned no keys");
         event.reply("Sorry, we are out of keys. Please try again later.");
         return;
     }
@@ -139,12 +139,12 @@ void BotHandler::on_slashcommand_random(const dpp::slashcommand_t& event)
 
 void BotHandler::on_slashcommand_games(const dpp::slashcommand_t& event)
 {
-    if (m_slashcommand_events.contains("gamse")) {
-        m_slashcommand_events["gamse"].delete_original_response();
+    if (m_slashcommand_events.contains("games")) {
+        m_slashcommand_events["games"].delete_original_response();
         m_slashcommand_events.erase("games");
     }
 
-    auto list = m_tokens.get_list_page("");
+    auto list = m_games.get_game_list_page("");
     if (!list.has_value()) {
         spdlog::error("Failed to load a page");
         event.reply(dpp::message("No games available."));
@@ -182,26 +182,26 @@ void BotHandler::on_button_click_get_prize(const dpp::button_click_t& event, con
         return;
     }
 
-    auto token = m_tokens.get_prize(event.custom_id);
-    if (!token.has_value()) {
-        spdlog::error("get_prize: failed to retrieve token by id");
+    auto game = m_games.get_prize(event.custom_id);
+    if (!game.has_value()) {
+        spdlog::error("get_prize: failed to retrieve game by id");
         m_bot.message_create(dpp::message(event.command.channel_id, "Unknown error. Please try again later"));
         event.reply();
         event.delete_original_response();
         return;
     }
  
-    m_bot.direct_message_create(user_id, dpp::message("Here is your key: " + token.value().key));
+    m_bot.direct_message_create(user_id, dpp::message("Here is your key: " + game.value().key));
     m_bot.message_create(dpp::message(event.command.channel_id, "Check your key in DM"));
 
     event.reply();
     event.delete_original_response();
-    m_tokens.deactivate(token.value());
+    m_games.deactivate(game.value());
 }
 
 void BotHandler::on_button_click_games(const dpp::button_click_t& event)
 {
-    auto list = m_tokens.get_list_page(event.custom_id);
+    auto list = m_games.get_game_list_page(event.custom_id);
     if (!list.has_value()) {
         event.reply();
         return;

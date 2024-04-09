@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TokenStorage.hpp"
+#include "GameStorage.hpp"
 #include "EventParser.hpp"
 #include "UserDataStorage.hpp"
 
@@ -38,7 +38,7 @@ private:
 
 private:
     dpp::cluster m_bot;
-    TokenStorage m_tokens;
+    GameStorage m_games;
     UserDataStorage m_users;
     dpp::slashcommand_t event;
     std::unordered_map<std::string, dpp::slashcommand_t> m_slashcommand_events;

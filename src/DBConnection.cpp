@@ -5,9 +5,9 @@
 
 std::shared_ptr<DBConnection> DBConnection::m_dbConn = nullptr;
 
-std::optional<const std::string> DBConnection::create_token_table()
+std::optional<const std::string> DBConnection::create_game_table()
 {
-    const std::string query = "CREATE TABLE IF NOT EXISTS token("\
+    const std::string query = "CREATE TABLE IF NOT EXISTS game("\
         "STATUS INT NOT NULL," \
         "ID CHAR(20) PRIMARY KEY NOT NULL,"\
         "NAME CHAR(30) NOT NULL,"\
@@ -16,7 +16,7 @@ std::optional<const std::string> DBConnection::create_token_table()
         "PRIORITY INT NOT NULL" \
     ");";
 
-    std::lock_guard guard{m_token_mutex};
+    std::lock_guard guard{m_game_mutex};
     return execute_query(query);
 }
 
@@ -31,41 +31,41 @@ std::optional<const std::string> DBConnection::create_user_score_table()
     return execute_query(query);
 }
 
-std::optional<const std::string> DBConnection::insert_token(const Token& token)
+std::optional<const std::string> DBConnection::insert_game(const Game& game)
 {
-    std::string query = std::format("INSERT INTO token(STATUS, ID, NAME, ACTIVATION_KEY, PRICE, PRIORITY)" \
+    std::string query = std::format("INSERT INTO game(STATUS, ID, NAME, ACTIVATION_KEY, PRICE, PRIORITY)" \
         "VALUES ({}, \"{}\", \"{}\", \"{}\", {}, {})",
-        token.status,
-        token.id,
-        token.name,
-        token.key,
-        token.price,
-        token.priority
+        game.status,
+        game.id,
+        game.name,
+        game.key,
+        game.price,
+        game.priority
     );
 
-    std::lock_guard guard{m_token_mutex};
+    std::lock_guard guard{m_game_mutex};
     return execute_query(query);
 }
 
-std::optional<const std::string> DBConnection::insert_tokens(const std::unordered_map<std::string, Token>& tokens)
+std::optional<const std::string> DBConnection::insert_games(const std::unordered_map<std::string, Game>& games)
 {
     std::string values;
-    for (auto [id, token] : tokens) {
+    for (auto [id, game] : games) {
         if (!values.empty()) {
             values += ",";
         }
         values += std::format("({}, \"{}\", \"{}\", \"{}\", {}, {})",
-            token.status,
-            token.id,
-            token.name,
-            token.key,
-            token.price,
-            token.priority
+            game.status,
+            game.id,
+            game.name,
+            game.key,
+            game.price,
+            game.priority
         );
     }
 
-    std::lock_guard guard{m_token_mutex};
-    return execute_query(std::format("INSERT INTO token(STATUS, ID, NAME, ACTIVATION_KEY, PRICE, PRIORITY) VALUES {};", values));
+    std::lock_guard guard{m_game_mutex};
+    return execute_query(std::format("INSERT INTO game(STATUS, ID, NAME, ACTIVATION_KEY, PRICE, PRIORITY) VALUES {};", values));
 }
 
 std::optional<const std::string> DBConnection::insert_user(const std::string& user_id)
@@ -79,10 +79,10 @@ std::optional<const std::string> DBConnection::insert_user(const std::string& us
     return execute_query(query);
 }
 
-std::optional<const std::string> DBConnection::update_token(const Token& token)
+std::optional<const std::string> DBConnection::update_game(const Game& game)
 {
     std::string query = std::format(
-        "UPDATE token SET " \
+        "UPDATE game SET " \
             "STATUS = {0},"
             "ID = \"{1}\"," \
             "NAME = \"{2}\"," \
@@ -90,15 +90,15 @@ std::optional<const std::string> DBConnection::update_token(const Token& token)
             "PRICE = {4}," \
             "PRIORITY = {5} " \
         "WHERE ID = \"{1}\";", \
-            token.status,
-            token.id, 
-            token.name, 
-            token.key, 
-            token.price, 
-            token.priority
+            game.status,
+            game.id, 
+            game.name, 
+            game.key, 
+            game.price, 
+            game.priority
     );
 
-    std::lock_guard guard{m_token_mutex};
+    std::lock_guard guard{m_game_mutex};
     return execute_query(query);
 }
 
@@ -113,47 +113,47 @@ std::optional<const std::string> DBConnection::update_user_score(const std::stri
     return execute_query(query);
 }
 
-std::unordered_map<std::string, Token> DBConnection::select_tokens(const std::string& condition)
+std::unordered_map<std::string, Game> DBConnection::select_games(const std::string& condition)
 {  
-    std::unordered_map<std::string, Token> tokens; 
+    std::unordered_map<std::string, Game> games; 
     
     std::string query;
     if (!condition.empty()) {
-        query = std::format("SELECT * FROM token {};", condition);
+        query = std::format("SELECT * FROM game {};", condition);
     } else {
-        query = "SELECT * FROM token;";
+        query = "SELECT * FROM game;";
     }
 
     sqlite3_stmt* stmt = nullptr;
     auto error_code = sqlite3_prepare_v2(m_sqlite, query.c_str(), -1, &stmt, nullptr);
     if (error_code != SQLITE_OK) {
         spdlog::error(std::format("sqlite3_prepare_v2: {}", sqlite3_errmsg(m_sqlite)));
-        return tokens;
+        return games;
     }
 
-    std::lock_guard guard{m_token_mutex};
+    std::lock_guard guard{m_game_mutex};
     while(true) {
         int error_code = sqlite3_step(stmt);
         if (error_code == SQLITE_ERROR) {
             spdlog::error(std::format("sqlite3_step: {}", sqlite3_errmsg(m_sqlite)));
-            return tokens;
+            return games;
         }
 
         if (error_code == SQLITE_DONE) {
-            return tokens;
+            return games;
         }
 
-        Token token;
-        token.id = reinterpret_cast<const char*>(sqlite3_column_text(stmt, DB::Token::ID));
-        token.name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, DB::Token::NAME));
-        token.key = reinterpret_cast<const char*>(sqlite3_column_text(stmt, DB::Token::KEY));
-        token.price = sqlite3_column_double(stmt, DB::Token::PRICE);
-        token.priority = sqlite3_column_int(stmt, DB::Token::PRIORITY);
+        Game game;
+        game.id = reinterpret_cast<const char*>(sqlite3_column_text(stmt, DB::Game::ID));
+        game.name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, DB::Game::NAME));
+        game.key = reinterpret_cast<const char*>(sqlite3_column_text(stmt, DB::Game::KEY));
+        game.price = sqlite3_column_double(stmt, DB::Game::PRICE);
+        game.priority = sqlite3_column_int(stmt, DB::Game::PRIORITY);
 
-        tokens[token.id] = token;
+        games[game.id] = game;
     }
 
-    return tokens;
+    return games;
 }
 
 std::optional<size_t> DBConnection::select_user_score(const std::string& user_id)
