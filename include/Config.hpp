@@ -8,13 +8,11 @@
 class Config
 {
 public:
-    Config(const std::string& path)
-    {
-
-    }
+    bool load(const std::string& path);
 
 public:
     std::string token;
+    std::string path_to_keys;
 private:
     void print();
 };
