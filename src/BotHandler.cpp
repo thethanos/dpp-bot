@@ -165,7 +165,7 @@ void BotHandler::on_slashcommand_games(const dpp::slashcommand_t& event)
     auto msg = make_game_list_message(embed);
     event.reply(msg);
 
-    m_slashcommand_events["games"] = event;
+    m_slashcommand_events[event.command.id.str()] = event;
 }
 
 void BotHandler::on_slashcommand_score(const dpp::slashcommand_t& event)
@@ -221,6 +221,6 @@ void BotHandler::on_button_click_games(const dpp::button_click_t& event, const E
     embed.set_description(page.value().content);
     auto msg = make_game_list_message(embed);
 
-    m_slashcommand_events["games"].edit_response(msg);
+    m_slashcommand_events[meta.parent.event_id].edit_response(msg);
     event.reply();
 }
