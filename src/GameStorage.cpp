@@ -80,31 +80,23 @@ const std::optional<const std::string> GameStorage::deactivate(Game game)
     return std::nullopt;
 }
 
-const std::optional<Game> GameStorage::get_prize(const std::string& game_id)
+const std::optional<Page> GameStorage::get_game_list_page(size_t page_number)
 {
-    auto gameIt = m_games.find(game_id);
-    if (gameIt == m_games.end()) {
+    std::lock_guard guard(m_mutex);
+    if (m_game_list_pages.empty()) {
         return std::nullopt;
     }
 
-    return gameIt->second;
-}
+    if (page_number >= m_game_list_pages.size()) {
+        return Page{m_game_list_pages[0], 0};
+    }
 
-const std::optional<const std::string> GameStorage::get_game_list_page(const std::string& direction)
-{
-    std::lock_guard guard(m_mutex);
-    if (direction == "next" && m_current_page < m_game_list_pages.size() - 1) {
-        m_current_page++;
-    }
-    if (direction == "prev" && m_current_page > 0) {
-        m_current_page--;
-    }
-    
-    return m_game_list_pages[m_current_page];
+    return Page{m_game_list_pages[page_number], page_number};
 }
 
 const std::optional<const std::string> GameStorage::update_game_list_pages()
-{
+{   
+    std::lock_guard guard(m_mutex);
     m_game_list_pages.clear();
 
     size_t counter = 0;

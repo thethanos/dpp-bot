@@ -16,9 +16,7 @@ public:
 
     const std::optional<const Game> play();
     const std::optional<const std::string> deactivate(Game game);
-    const std::optional<Game> get_prize(const std::string& game_id);    
-
-    const std::optional<const std::string> get_game_list_page(const std::string& direction);
+    const std::optional<Page> get_game_list_page(size_t page_number);
 
     const bool empty() const { return m_games.empty(); }
 
@@ -30,6 +28,5 @@ private:
     Randomizer m_randomizer;
     std::unordered_map<std::string, Game> m_games;
     std::vector<std::string> m_game_list_pages;
-    int m_current_page = 0;
     std::mutex m_mutex;
 };

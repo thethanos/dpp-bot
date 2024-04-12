@@ -33,8 +33,8 @@ private:
     void on_slashcommand_games(const dpp::slashcommand_t& event);
     void on_slashcommand_score(const dpp::slashcommand_t& event);
 
-    void on_button_click_get_prize(const dpp::button_click_t& event, const IdType& event_target);
-    void on_button_click_games(const dpp::button_click_t& event);
+    void on_button_click_random(const dpp::button_click_t& event, const EventMeta& meta);
+    void on_button_click_games(const dpp::button_click_t& event, const EventMeta& meta);
 
 private:
     dpp::cluster m_bot;

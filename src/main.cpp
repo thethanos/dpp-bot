@@ -1,5 +1,7 @@
 #include "BotHandler.hpp"
 #include "Config.hpp"
+#include <map>
+
 
 int main(int argc, char** argv) 
 {    

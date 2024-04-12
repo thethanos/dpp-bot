@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include "Util.hpp"
 
 enum Status
 {
@@ -21,7 +21,7 @@ enum Columns
 struct Game
 {   
     size_t status;
-    std::string id;
+    IdType id;
     std::string name;
     std::string key;
     double price;

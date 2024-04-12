@@ -89,13 +89,17 @@ void BotHandler::handle_button_click(const dpp::button_click_t& event)
     }
 
     const auto name = meta.value().parent.name;
-    if (name == "random") {
-        on_button_click_get_prize(event, meta.value().parent.user_id);
+    if (name == "random" && meta.value().user_id == meta.value().parent.user_id) {
+        on_button_click_random(event, meta.value());
+        return;
     }
 
-    if (name == "games") {
-        on_button_click_games(event);
+    if (name == "games" && meta.value().user_id == meta.value().parent.user_id) {
+        on_button_click_games(event, meta.value());
+        return;
     }
+
+    event.reply();
 }
 
 void BotHandler::handle_message_received(const dpp::message_create_t& event)
@@ -106,34 +110,37 @@ void BotHandler::handle_message_received(const dpp::message_create_t& event)
 
 void BotHandler::on_slashcommand_random(const dpp::slashcommand_t& event) 
 {
-    auto user_id = event.command.usr.id.str();
+    auto meta = get_event_meta(event);
+    if (!meta.has_value()) {
+        spdlog::error("get_event_meta: failed to parse event meta");
+        event.reply("Error occured. Please try again later");
+        return;
+    }
+
+    auto user_id = meta.value().user_id;
+
     auto user_score = m_users.get_score(user_id);
     if (!user_score.has_value() || user_score.value() == 0) {
         event.reply("Sorry, your balance is 0. Please try again later.");
         return;
     }
 
-    m_users.remove_score(user_id, 1);
-
-    std::optional<const Game> game = m_games.play();
+    auto game = m_games.play();
     if (!game.has_value()) {
-        spdlog::error("GameStorage returned no keys");
+        spdlog::error("play: function returned no keys");
         event.reply("Sorry, we are out of keys. Please try again later.");
         return;
     }
 
-    dpp::message msg(event.command.channel_id, "Your game is " + game.value().name);
-    msg.add_component(
-        dpp::component().add_component(
-            dpp::component()
-                .set_label("Get the key")
-                .set_type(dpp::cot_button)
-                //.set_emoji(dpp::unicode_emoji::smile)
-                .set_style(dpp::cos_danger)
-                .set_id(game.value().id)
-        )
-    );
-            
+    if (auto error = m_users.add_win(user_id, meta.value().event_id, game.value()); error.has_value()) {
+        spdlog::error("add_win: failed to parse event meta");
+        event.reply("Error occured. Please try again later");
+        return;
+    }
+    m_users.remove_score(user_id, 1);
+    m_users.add_win(user_id, meta.value().event_id, game.value());
+
+    auto msg = make_random_response_message(event.command.channel_id, game.value().name);       
     event.reply(msg);
 }
 
@@ -144,8 +151,8 @@ void BotHandler::on_slashcommand_games(const dpp::slashcommand_t& event)
         m_slashcommand_events.erase("games");
     }
 
-    auto list = m_games.get_game_list_page("");
-    if (!list.has_value()) {
+    auto page = m_games.get_game_list_page(0);
+    if (!page.has_value()) {
         spdlog::error("Failed to load a page");
         event.reply(dpp::message("No games available."));
         return;
@@ -153,7 +160,7 @@ void BotHandler::on_slashcommand_games(const dpp::slashcommand_t& event)
     
     dpp::embed embed;
     embed.set_title("Games");
-    embed.set_description(list.value());
+    embed.set_description(page.value().content);
 
     auto msg = make_game_list_message(embed);
     event.reply(msg);
@@ -174,42 +181,44 @@ void BotHandler::on_slashcommand_score(const dpp::slashcommand_t& event)
     event.reply(dpp::message(std::format("You have {} points.", user_score.value())));
 }
 
-void BotHandler::on_button_click_get_prize(const dpp::button_click_t& event, const IdType& event_target)
+void BotHandler::on_button_click_random(const dpp::button_click_t& event, const EventMeta& meta)
 {
-    auto user_id = event.command.member.user_id;
-    if (user_id.str() != event_target) {
-        event.reply();
-        return;
-    }
-
-    auto game = m_games.get_prize(event.custom_id);
-    if (!game.has_value()) {
-        spdlog::error("get_prize: failed to retrieve game by id");
-        m_bot.message_create(dpp::message(event.command.channel_id, "Unknown error. Please try again later"));
-        event.reply();
+    if (event.custom_id == "get") {
+        auto game = m_users.get_win(meta.user_id, meta.parent.event_id);
+        if (!game.has_value()) {
+            spdlog::error("get_prize: failed to retrieve game by id");
+            m_bot.message_create(dpp::message(event.command.channel_id, "Unknown error. Please try again later"));
+            event.reply();
+            event.delete_original_response();
+            return;
+        }
+    
+        m_bot.direct_message_create(meta.user_id, dpp::message("Here is your key: " + game.value().key));
+        m_bot.message_create(dpp::message(event.command.channel_id, "Check your key in DM"));
         event.delete_original_response();
+        m_games.deactivate(game.value());
         return;
     }
- 
-    m_bot.direct_message_create(user_id, dpp::message("Here is your key: " + game.value().key));
-    m_bot.message_create(dpp::message(event.command.channel_id, "Check your key in DM"));
 
-    event.reply();
-    event.delete_original_response();
-    m_games.deactivate(game.value());
+    if (event.custom_id == "sell") {
+        event.reply(dpp::message("Selling game"));
+        return;
+    }
 }
 
-void BotHandler::on_button_click_games(const dpp::button_click_t& event)
-{
-    auto list = m_games.get_game_list_page(event.custom_id);
-    if (!list.has_value()) {
+void BotHandler::on_button_click_games(const dpp::button_click_t& event, const EventMeta& meta)
+{   
+    auto cursor = m_users.get_cursor(meta.user_id, meta.parent.event_id, event.custom_id);
+    auto page = m_games.get_game_list_page(cursor);
+    if (!page.has_value()) {
         event.reply();
         return;
     }
+    m_users.set_cursor(meta.user_id, meta.parent.event_id, page.value().number);
 
     dpp::embed embed;
     embed.set_title("Games");
-    embed.set_description(list.value());
+    embed.set_description(page.value().content);
     auto msg = make_game_list_message(embed);
 
     m_slashcommand_events["games"].edit_response(msg);
