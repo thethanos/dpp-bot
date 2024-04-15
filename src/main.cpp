@@ -9,9 +9,11 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    auto dbConn = std::make_shared<DBConnection>(config);
-    auto games = std::make_unique<GameStorage>(dbConn);
-    auto users = std::make_unique<UserDataStorage>(dbConn);
+    auto gameDb = std::make_unique<GameStorageDB>(config);
+    auto games = std::make_unique<GameStorage>(std::move(gameDb));
+
+    auto userDb = std::make_unique<UserDataStorageDB>(config);
+    auto users = std::make_unique<UserDataStorage>(std::move(userDb));
 
     BotHandler bot(config.token, std::move(games), std::move(users));
     bot.init_data(config.path_to_keys);

@@ -1,9 +1,8 @@
 #include "UserDataStorage.hpp"
-#include "DBConnection.hpp"
 
-const std::optional<const std::string> UserDataStorage::create_table()
+const std::optional<const std::string> UserDataStorage::init_user_data_storage()
 {
-    if (auto error = m_dbConn->create_user_score_table(); error.has_value()) {
+    if (auto error = m_dbConn->init_user_data_storage(); error.has_value()) {
         return std::format("create_user_score_table: {}", error.value());
     }
 

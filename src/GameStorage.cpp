@@ -2,9 +2,9 @@
 
 #include <algorithm>
 
-const std::optional<const std::string> GameStorage::create_table()
+const std::optional<const std::string> GameStorage::init_game_storage()
 {
-    if (auto error = m_dbConn->create_game_table(); error.has_value()) {
+    if (auto error = m_dbConn->init_game_storage(); error.has_value()) {
         return std::format("create_game_table: {}", error.value());
     }
 

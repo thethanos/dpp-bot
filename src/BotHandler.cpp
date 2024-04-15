@@ -1,18 +1,17 @@
 #include "BotHandler.hpp"
-#include "DBConnection.hpp"
 #include "Message.hpp"
 
 #include <algorithm>
 
 int BotHandler::init_data(const std::string& path_to_keys)
 {
-    if (auto error = m_games->create_table(); error.has_value()) {
-        spdlog::error(std::format("create_table: {}", error.value()));
+    if (auto error = m_games->init_game_storage(); error.has_value()) {
+        spdlog::error(std::format("init_game_storage: {}", error.value()));
         return -1;
     }
 
-    if (auto error = m_users->create_table(); error.has_value()) {
-        spdlog::error(std::format("create_table: {}", error.value()));
+    if (auto error = m_users->init_user_data_storage(); error.has_value()) {
+        spdlog::error(std::format("init_user_data_storage: {}", error.value()));
         return -1;
     }
 
@@ -193,6 +192,7 @@ void BotHandler::on_button_click_random(const dpp::button_click_t& event, const 
     
         m_bot.direct_message_create(meta.user_id, dpp::message("Here is your key: " + game.value().key));
         m_bot.message_create(dpp::message(event.command.channel_id, "Check your key in DM"));
+        event.reply();
         event.delete_original_response();
         m_games->deactivate(game.value());
         m_users->remove_score(meta.user_id, 10);
@@ -201,6 +201,7 @@ void BotHandler::on_button_click_random(const dpp::button_click_t& event, const 
 
     if (event.custom_id == "sell") {
         m_bot.message_create(dpp::message(event.command.channel_id, "You sold the game for half of the price"));
+        event.reply();
         event.delete_original_response();
         m_users->remove_score(meta.user_id, 5);
         return;

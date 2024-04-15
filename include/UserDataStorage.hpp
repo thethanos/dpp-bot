@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DBConnection.hpp"
+#include "UserDataStorageDB.hpp"
 #include "UserSession.hpp"
 #include "Util.hpp"
 
@@ -11,10 +11,10 @@
 class UserDataStorage
 {
 public:
-    UserDataStorage(const std::shared_ptr<DBConnection>& dbConn):m_dbConn(dbConn){}
+    UserDataStorage(std::unique_ptr<UserDataStorageDB> dbConn):m_dbConn(std::move(dbConn)){}
 
 public:
-    const std::optional<const std::string> create_table();
+    const std::optional<const std::string> init_user_data_storage();
     void add_score(const IdType& user_id, size_t score);
     void remove_score(const IdType& user_id, size_t score);
     const std::optional<size_t> get_score(const IdType& user_id);
@@ -29,5 +29,5 @@ private:
 private:
     std::unordered_map<IdType, size_t> m_user_score;
     std::unordered_map<IdType, UserSession> m_user_sessions;
-    std::shared_ptr<DBConnection> m_dbConn;
+    std::unique_ptr<UserDataStorageDB> m_dbConn;
 };

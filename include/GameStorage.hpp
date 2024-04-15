@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Randomizer.hpp"
-#include "DBConnection.hpp"
+#include "GameStorageDB.hpp"
 
 #include "rapidcsv.hpp"
 
@@ -10,10 +10,10 @@
 class GameStorage
 {
 public:
-    GameStorage(const std::shared_ptr<DBConnection>& dbConn):m_dbConn(dbConn){}
+    GameStorage(std::unique_ptr<GameStorageDB> dbConn):m_dbConn(std::move(dbConn)){}
 
 public:
-    const std::optional<const std::string> create_table();
+    const std::optional<const std::string> init_game_storage();
     const std::optional<const std::string> load_games_from_file(const std::string& path);
     const std::optional<const std::string> load_games_from_db();
 
@@ -32,5 +32,5 @@ private:
     std::unordered_map<std::string, Game> m_games;
     std::vector<std::string> m_game_list_pages;
     std::mutex m_mutex;
-    std::shared_ptr<DBConnection> m_dbConn;
+    std::unique_ptr<GameStorageDB> m_dbConn;
 };
