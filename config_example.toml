@@ -3,3 +3,10 @@ token = "token value"
 
 [game]
 path_to_keys = "../keys.csv"
+
+[postgres]
+host     = "host"
+port     = 5432
+user     = "user"
+password = "password"
+dbname   = "dbname"

@@ -9,16 +9,15 @@ aux_source_directory(src SOURCES)
 add_executable(${PROJECT_NAME} src/main.cpp ${SOURCES})
 
 find_package(DPP REQUIRED)   
-find_package(SQLite3 REQUIRED)
+find_package(libpqxx REQUIRED)
 
-target_link_libraries(${PROJECT_NAME} ${DPP_LIBRARIES} ${SQLite3_LIBRARIES} spdlog)
+target_link_libraries(${PROJECT_NAME} ${DPP_LIBRARIES} pqxx pq spdlog)
 
 target_include_directories(
     ${PROJECT_NAME} PRIVATE 
         deps 
         include 
         ${DPP_INCLUDE_DIR} 
-        ${SQLite3_INCLUDE_DIRS}
 )
      
 set_target_properties(${PROJECT_NAME} PROPERTIES

@@ -12,5 +12,9 @@
 				"ms-vscode.cmake-tools"
 			]
 		}
-	}
+	},
+    
+    "runArgs": [
+        "--network=home_default"
+    ]
 }

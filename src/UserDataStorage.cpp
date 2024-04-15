@@ -3,7 +3,7 @@
 
 const std::optional<const std::string> UserDataStorage::create_table()
 {
-    if (auto error = DBConnection::get_conn()->create_user_score_table(); error.has_value()) {
+    if (auto error = m_dbConn->create_user_score_table(); error.has_value()) {
         return std::format("create_user_score_table: {}", error.value());
     }
 
@@ -74,14 +74,12 @@ void UserDataStorage::set_cursor(const IdType& user_id, const IdType& event_id, 
 
 const std::optional<const std::string> UserDataStorage::update_database(const IdType& user_id)
 {
-    auto dbConn = DBConnection::get_conn();
-
-    auto current_score = dbConn->select_user_score(user_id);
+    auto current_score = m_dbConn->select_user_score(user_id);
     if (!current_score.has_value()) {
-        if (auto error = dbConn->insert_user(user_id); error.has_value()) {
+        if (auto error = m_dbConn->insert_user(user_id); error.has_value()) {
             return error;
         }
     }
 
-    return dbConn->update_user_score(user_id, m_user_score[user_id]);
+    return m_dbConn->update_user_score(user_id, m_user_score[user_id]);
 }

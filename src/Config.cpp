@@ -17,8 +17,43 @@ bool Config::load(const std::string& path)
             return false;
         }
 
+        auto psql_host = config["postgres"]["host"].value<std::string>();
+        if (!psql_host.has_value()) {
+            spdlog::error("Failed to load postgres host");
+            return false;
+        }
+
+        auto psql_port = config["postgres"]["port"].value<int>();
+        if (!psql_port.has_value()) {
+            spdlog::error("Failed to load postgres port");
+            return false;
+        }
+
+        auto psql_user = config["postgres"]["user"].value<std::string>();
+        if (!psql_user.has_value()) {
+            spdlog::error("Failed to load postgres user");
+            return false;
+        }
+
+        auto psql_password = config["postgres"]["password"].value<std::string>();
+        if (!psql_password.has_value()) {
+            spdlog::error("Failed to load postgres password");
+            return false;
+        }
+
+        auto psql_dbname = config["postgres"]["dbname"].value<std::string>();
+        if (!psql_dbname.has_value()) {
+            spdlog::error("Failed to load postgres db name");
+            return false;
+        }
+
         this->token = token.value();
         this->path_to_keys = path_to_keys.value();
+        this->psql_host = psql_host.value();
+        this->psql_port = psql_port.value();
+        this->psql_user = psql_user.value();
+        this->psql_password = psql_password.value();
+        this->psql_dbname = psql_dbname.value();
         print();
     }
     catch (const toml::parse_error& err) {
@@ -33,4 +68,7 @@ void Config::print()
     spdlog::info("Configuration parsed successfully.");
     spdlog::info("Token: {}...", token.substr(0, token.size()/4));
     spdlog::info("Path to keys: {}", path_to_keys);
+    spdlog::info("Postgres host: {}", psql_host);
+    spdlog::info("Postgres port: {}", psql_port);
+    spdlog::info("Postgres db name: {}", psql_dbname);
 }

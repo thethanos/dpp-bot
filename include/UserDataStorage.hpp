@@ -1,13 +1,18 @@
 #pragma once
 
+#include "DBConnection.hpp"
 #include "UserSession.hpp"
 #include "Util.hpp"
 
 #include <unordered_map>
 #include <optional>
+#include <memory>
 
 class UserDataStorage
 {
+public:
+    UserDataStorage(const std::shared_ptr<DBConnection>& dbConn):m_dbConn(dbConn){}
+
 public:
     const std::optional<const std::string> create_table();
     void add_score(const IdType& user_id, size_t score);
@@ -24,4 +29,5 @@ private:
 private:
     std::unordered_map<IdType, size_t> m_user_score;
     std::unordered_map<IdType, UserSession> m_user_sessions;
+    std::shared_ptr<DBConnection> m_dbConn;
 };

@@ -4,7 +4,7 @@
 
 const std::optional<const std::string> GameStorage::create_table()
 {
-    if (auto error = DBConnection::get_conn()->create_game_table(); error.has_value()) {
+    if (auto error = m_dbConn->create_game_table(); error.has_value()) {
         return std::format("create_game_table: {}", error.value());
     }
 
@@ -36,7 +36,7 @@ const std::optional<const std::string> GameStorage::load_games_from_file(const s
         m_games[game.id] = game;
     }
 
-    if (auto error = DBConnection::get_conn()->insert_games(m_games); error.has_value()) {
+    if (auto error = m_dbConn->insert_games(m_games); error.has_value()) {
         return std::format("insert_games: {}", error.value());
     }
 
@@ -70,7 +70,7 @@ const std::optional<const Game> GameStorage::play()
 const std::optional<const std::string> GameStorage::deactivate(Game game)
 {   
     game.status = INACTIVE;
-    auto error = DBConnection::get_conn()->update_game(game);
+    auto error = m_dbConn->update_game(game);
     if (error.has_value()) {
         return std::format("update_game: {}", error.value());
     }
@@ -118,7 +118,7 @@ const std::optional<const std::string> GameStorage::update_game_list_pages()
 
 const std::optional<const std::string> GameStorage::update_available_games()
 {
-    auto games = DBConnection::get_conn()->select_games(std::format("WHERE STATUS = {} ORDER BY NAME", int(ACTIVE)));
+    auto games = m_dbConn->select_games(std::format("WHERE STATUS = {} ORDER BY NAME", int(ACTIVE)));
     if (games.empty()) {
         return "select_games: failed to load games";
     }

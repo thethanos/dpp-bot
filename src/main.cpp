@@ -1,7 +1,5 @@
 #include "BotHandler.hpp"
 #include "Config.hpp"
-#include <map>
-
 
 int main(int argc, char** argv) 
 {    
@@ -11,7 +9,11 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    BotHandler bot(config.token);
+    auto dbConn = std::make_shared<DBConnection>(config);
+    auto games = std::make_unique<GameStorage>(dbConn);
+    auto users = std::make_unique<UserDataStorage>(dbConn);
+
+    BotHandler bot(config.token, std::move(games), std::move(users));
     bot.init_data(config.path_to_keys);
     bot.init_handlers();
     bot.start();

@@ -9,11 +9,16 @@
 class BotHandler
 {
 public:
-    BotHandler(const std::string& token):m_bot(token,
-        dpp::i_message_content | 
-        dpp::i_guilds | 
-        dpp::i_guild_members | 
-        dpp::i_guild_messages)
+    BotHandler(const std::string& token, 
+        std::unique_ptr<GameStorage> games, 
+        std::unique_ptr<UserDataStorage> users)
+        :m_bot(token,
+            dpp::i_message_content | 
+            dpp::i_guilds | 
+            dpp::i_guild_members | 
+            dpp::i_guild_messages)
+        ,m_games(std::move(games))
+        ,m_users(std::move(users))
     {
 
     }
@@ -38,8 +43,8 @@ private:
 
 private:
     dpp::cluster m_bot;
-    GameStorage m_games;
-    UserDataStorage m_users;
+    std::unique_ptr<GameStorage> m_games;
+    std::unique_ptr<UserDataStorage> m_users;
     dpp::slashcommand_t event;
     std::unordered_map<std::string, dpp::slashcommand_t> m_slashcommand_events;
 };

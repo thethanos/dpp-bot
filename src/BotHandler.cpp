@@ -6,23 +6,23 @@
 
 int BotHandler::init_data(const std::string& path_to_keys)
 {
-    if (auto error = m_games.create_table(); error.has_value()) {
+    if (auto error = m_games->create_table(); error.has_value()) {
         spdlog::error(std::format("create_table: {}", error.value()));
         return -1;
     }
 
-    if (auto error = m_users.create_table(); error.has_value()) {
+    if (auto error = m_users->create_table(); error.has_value()) {
         spdlog::error(std::format("create_table: {}", error.value()));
         return -1;
     }
 
-    if (auto error = m_games.load_games_from_db(); error.has_value()) {
+    if (auto error = m_games->load_games_from_db(); error.has_value()) {
         spdlog::error(std::format("load_games_from_db: {}", error.value()));
     }
     
-    if (m_games.empty()) {
+    if (m_games->empty()) {
         spdlog::info("init_data: trying to load from file..");
-        if (auto error = m_games.load_games_from_file(path_to_keys); error.has_value()) {
+        if (auto error = m_games->load_games_from_file(path_to_keys); error.has_value()) {
             spdlog::error(error.value());
             return -1;
         }
@@ -105,7 +105,7 @@ void BotHandler::handle_button_click(const dpp::button_click_t& event)
 void BotHandler::handle_message_received(const dpp::message_create_t& event)
 {   
     auto user_id = event.msg.author.id.str();
-    m_users.add_score(user_id, 1);
+    m_users->add_score(user_id, 1);
 }
 
 void BotHandler::on_slashcommand_random(const dpp::slashcommand_t& event) 
@@ -119,26 +119,24 @@ void BotHandler::on_slashcommand_random(const dpp::slashcommand_t& event)
 
     auto user_id = meta.value().user_id;
 
-    auto user_score = m_users.get_score(user_id);
-    if (!user_score.has_value() || user_score.value() == 0) {
-        event.reply("Sorry, your balance is 0. Please try again later.");
+    auto user_score = m_users->get_score(user_id);
+    if (!user_score.has_value() || user_score.value() < 10) {
+        event.reply(std::format("Sorry, your balance is {}. Please try again later.", user_score.has_value()?user_score.value():0));
         return;
     }
 
-    auto game = m_games.play();
+    auto game = m_games->play();
     if (!game.has_value()) {
         spdlog::error("play: function returned no keys");
         event.reply("Sorry, we are out of keys. Please try again later.");
         return;
     }
 
-    if (auto error = m_users.add_win(user_id, meta.value().event_id, game.value()); error.has_value()) {
+    if (auto error = m_users->add_win(user_id, meta.value().event_id, game.value()); error.has_value()) {
         spdlog::error("add_win: failed to parse event meta");
         event.reply("Error occured. Please try again later");
         return;
     }
-    m_users.remove_score(user_id, 1);
-    m_users.add_win(user_id, meta.value().event_id, game.value());
 
     auto msg = make_random_response_message(event.command.channel_id, game.value().name);       
     event.reply(msg);
@@ -151,7 +149,7 @@ void BotHandler::on_slashcommand_games(const dpp::slashcommand_t& event)
         m_slashcommand_events.erase("games");
     }
 
-    auto page = m_games.get_game_list_page(0);
+    auto page = m_games->get_game_list_page(0);
     if (!page.has_value()) {
         spdlog::error("Failed to load a page");
         event.reply(dpp::message("No games available."));
@@ -171,7 +169,7 @@ void BotHandler::on_slashcommand_games(const dpp::slashcommand_t& event)
 void BotHandler::on_slashcommand_score(const dpp::slashcommand_t& event)
 {
     auto user_id = event.command.usr.id.str();
-    auto user_score = m_users.get_score(user_id);
+    auto user_score = m_users->get_score(user_id);
     if (!user_score.has_value()) {
         spdlog::error("get_score: empty score value returned");
         event.reply("Sorry, something went wrong. Please try again later.");
@@ -184,7 +182,7 @@ void BotHandler::on_slashcommand_score(const dpp::slashcommand_t& event)
 void BotHandler::on_button_click_random(const dpp::button_click_t& event, const EventMeta& meta)
 {
     if (event.custom_id == "get") {
-        auto game = m_users.get_win(meta.user_id, meta.parent.event_id);
+        auto game = m_users->get_win(meta.user_id, meta.parent.event_id);
         if (!game.has_value()) {
             spdlog::error("get_prize: failed to retrieve game by id");
             m_bot.message_create(dpp::message(event.command.channel_id, "Unknown error. Please try again later"));
@@ -196,25 +194,28 @@ void BotHandler::on_button_click_random(const dpp::button_click_t& event, const 
         m_bot.direct_message_create(meta.user_id, dpp::message("Here is your key: " + game.value().key));
         m_bot.message_create(dpp::message(event.command.channel_id, "Check your key in DM"));
         event.delete_original_response();
-        m_games.deactivate(game.value());
+        m_games->deactivate(game.value());
+        m_users->remove_score(meta.user_id, 10);
         return;
     }
 
     if (event.custom_id == "sell") {
-        event.reply(dpp::message("Selling game"));
+        m_bot.message_create(dpp::message(event.command.channel_id, "You sold the game for half of the price"));
+        event.delete_original_response();
+        m_users->remove_score(meta.user_id, 5);
         return;
     }
 }
 
 void BotHandler::on_button_click_games(const dpp::button_click_t& event, const EventMeta& meta)
 {   
-    auto cursor = m_users.get_cursor(meta.user_id, meta.parent.event_id, event.custom_id);
-    auto page = m_games.get_game_list_page(cursor);
+    auto cursor = m_users->get_cursor(meta.user_id, meta.parent.event_id, event.custom_id);
+    auto page = m_games->get_game_list_page(cursor);
     if (!page.has_value()) {
         event.reply();
         return;
     }
-    m_users.set_cursor(meta.user_id, meta.parent.event_id, page.value().number);
+    m_users->set_cursor(meta.user_id, meta.parent.event_id, page.value().number);
 
     dpp::embed embed;
     embed.set_title("Games");

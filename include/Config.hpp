@@ -13,6 +13,11 @@ public:
 public:
     std::string token;
     std::string path_to_keys;
+    std::string psql_host;
+    int psql_port;
+    std::string psql_user;
+    std::string psql_password;
+    std::string psql_dbname;
 private:
     void print();
 };
