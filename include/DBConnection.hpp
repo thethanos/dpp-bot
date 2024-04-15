@@ -12,8 +12,6 @@
 #include <optional>
 #include <unordered_map>
 
-using Callback = int(void*,int,char**,char**);
-
 class DBConnection
 {
 public:
@@ -44,8 +42,8 @@ public:
     std::optional<size_t> select_user_score(const std::string& user_id);
 
 private:
-    std::optional<const std::string> execute_query(const std::string&, Callback callback = nullptr);
+    std::optional<const std::string> execute_simple_query(const std::string&);
 
 private:
-    pqxx::connection m_dbConn;
+    std::optional<pqxx::connection> m_dbConn;
 };
