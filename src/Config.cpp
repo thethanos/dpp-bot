@@ -47,6 +47,24 @@ bool Config::load(const std::string& path)
             return false;
         }
 
+        auto redis_host = config["redis"]["host"].value<std::string>();
+        if (!redis_host.has_value()) {
+            spdlog::error("Failed to load redis host");
+            return false;
+        }
+
+        auto redis_port = config["redis"]["port"].value<int>();
+        if (!redis_port.has_value()) {
+            spdlog::error("Failed to load redis port");
+            return false;
+        }
+
+        auto game_price = config["economy"]["game_price"].value<int>();
+        if (!game_price.has_value()) {
+            spdlog::error("Failed to load game price");
+            return false;
+        }
+
         this->token = token.value();
         this->path_to_keys = path_to_keys.value();
         this->psql_host = psql_host.value();
@@ -54,6 +72,9 @@ bool Config::load(const std::string& path)
         this->psql_user = psql_user.value();
         this->psql_password = psql_password.value();
         this->psql_dbname = psql_dbname.value();
+        this->redis_host = redis_host.value();
+        this->redis_port = redis_port.value();
+        this->game_price = game_price.value();
         print();
     }
     catch (const toml::parse_error& err) {
@@ -71,4 +92,7 @@ void Config::print()
     spdlog::info("Postgres host: {}", psql_host);
     spdlog::info("Postgres port: {}", psql_port);
     spdlog::info("Postgres db name: {}", psql_dbname);
+    spdlog::info("Redis host: {}", redis_host);
+    spdlog::info("Redis port: {}", redis_port);
+    spdlog::info("Game price: {}", game_price);
 }

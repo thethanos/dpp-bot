@@ -1,6 +1,6 @@
 #pragma once
 
-#include "UserDataStorageDB.hpp"
+#include "UserDataStorageRedis.hpp"
 #include "UserSession.hpp"
 #include "Util.hpp"
 
@@ -11,12 +11,16 @@
 class UserDataStorage
 {
 public:
-    UserDataStorage(std::unique_ptr<UserDataStorageDB> dbConn):m_dbConn(std::move(dbConn)){}
+    UserDataStorage(std::unique_ptr<UserDataStorageRedis> redis)
+        :m_redis(std::move(redis))
+    {
+
+    }
 
 public:
-    const std::optional<const std::string> init_user_data_storage();
     void add_score(const IdType& user_id, size_t score);
     void remove_score(const IdType& user_id, size_t score);
+    void remove_score_counter(const IdType& user_id);
     const std::optional<size_t> get_score(const IdType& user_id);
     const std::optional<const std::string> add_win(const IdType& user_id, const IdType& event_id, const Game& game);
     const std::optional<Game> get_win(const IdType& user_id, const IdType& event_id);
@@ -24,10 +28,6 @@ public:
     void set_cursor(const IdType& user_id, const IdType& event_id, int page_number);
 
 private:
-    const std::optional<const std::string> update_database(const IdType& user_id);
-
-private:
-    std::unordered_map<IdType, size_t> m_user_score;
     std::unordered_map<IdType, UserSession> m_user_sessions;
-    std::unique_ptr<UserDataStorageDB> m_dbConn;
+    std::unique_ptr<UserDataStorageRedis> m_redis;
 };

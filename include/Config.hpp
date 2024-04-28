@@ -18,6 +18,9 @@ public:
     std::string psql_user;
     std::string psql_password;
     std::string psql_dbname;
+    std::string redis_host;
+    int redis_port;
+    int game_price;
 private:
     void print();
 };

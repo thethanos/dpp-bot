@@ -15,7 +15,7 @@ COPY spdlog/ .
 WORKDIR /usr/src/spdlog/build
 
 RUN cmake .. -DCMAKE_INSTALL_PREFIX=/usr
-RUN make -j 6
+RUN make -j 2
 RUN make install
 
 # install DPP https://github.com/brainboxdotcc/DPP.git
@@ -24,7 +24,7 @@ COPY DPP/ .
 WORKDIR /usr/src/DPP/build
 
 RUN cmake .. -DDPP_BUILD_TEST=OFF
-RUN make -j 6
+RUN make -j 2
 RUN make install
 
 # install PostgreSQL https://github.com/jtv/libpqxx.git
@@ -33,7 +33,7 @@ COPY libpqxx/ .
 WORKDIR /usr/src/libpqxx/build
 
 RUN cmake .. -DCMAKE_INSTALL_PREFIX=/usr
-RUN make -j 6
+RUN make -j 2
 RUN make install
 
 # install google test https://github.com/google/googletest.git
@@ -42,5 +42,14 @@ COPY googletest/ .
 WORKDIR /usr/src/googletest/build
 
 RUN cmake .. -DCMAKE_INSTALL_PREFIX=/usr
-RUN make -j 6
+RUN make -j 2
+RUN make install
+
+# install redis
+WORKDIR /usr/src/hiredis
+COPY hiredis/ .
+WORKDIR /usr/src/hiredis/build
+
+RUN cmake .. -DCMAKE_INSTALL_PREFIX=/usr
+RUN make -j 2
 RUN make install

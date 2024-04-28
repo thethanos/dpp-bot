@@ -1,37 +1,23 @@
 #include "UserDataStorage.hpp"
 
-const std::optional<const std::string> UserDataStorage::init_user_data_storage()
-{
-    if (auto error = m_dbConn->init_user_data_storage(); error.has_value()) {
-        return std::format("create_user_score_table: {}", error.value());
-    }
-
-    return std::nullopt;
-}
-
 void UserDataStorage::add_score(const IdType& user_id, size_t score)
 {
-    m_user_score[user_id]+= score;
+    m_redis->add_score(user_id, score);
 }
 
 void UserDataStorage::remove_score(const IdType& user_id, size_t score)
 {
-    if (m_user_score[user_id] == 0 || int(m_user_score[user_id] - score) <= 0) {
-        m_user_score[user_id] = 0;
-    } else {
-        m_user_score[user_id] -= score;
-    }
+    m_redis->remove_score(user_id, score);
+}
 
-    update_database(user_id);
+void UserDataStorage::remove_score_counter(const IdType& user_id)
+{
+    m_redis->remove_score_counter(user_id);
 }
 
 const std::optional<size_t> UserDataStorage::get_score(const IdType& user_id)
 {
-    if (auto error = update_database(user_id); error.has_value()) {
-        spdlog::error("update_database : {}", error.value());
-        return std::nullopt;
-    }
-    return m_user_score[user_id];
+    return m_redis->get_score(user_id);
 }
 
 const std::optional<const std::string> UserDataStorage::add_win(const IdType& user_id, const IdType& event_id, const Game& game)
@@ -69,16 +55,4 @@ void UserDataStorage::set_cursor(const IdType& user_id, const IdType& event_id, 
     }
 
     m_user_sessions[user_id].set_cursor(event_id, page_number);
-}
-
-const std::optional<const std::string> UserDataStorage::update_database(const IdType& user_id)
-{
-    auto current_score = m_dbConn->select_user_score(user_id);
-    if (!current_score.has_value()) {
-        if (auto error = m_dbConn->insert_user(user_id); error.has_value()) {
-            return error;
-        }
-    }
-
-    return m_dbConn->update_user_score(user_id, m_user_score[user_id]);
 }

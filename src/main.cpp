@@ -11,12 +11,12 @@ int main(int argc, char** argv)
 
     auto gameDb = std::make_unique<GameStorageDB>(config);
     auto games = std::make_unique<GameStorage>(std::move(gameDb));
+;
+    auto redis = std::make_unique<UserDataStorageRedis>(config);
+    auto users = std::make_unique<UserDataStorage>(std::move(redis));
 
-    auto userDb = std::make_unique<UserDataStorageDB>(config);
-    auto users = std::make_unique<UserDataStorage>(std::move(userDb));
-
-    BotHandler bot(config.token, std::move(games), std::move(users));
-    bot.init_data(config.path_to_keys);
+    BotHandler bot(config, std::move(games), std::move(users));
+    bot.init_data();
     bot.init_handlers();
     bot.start();
 

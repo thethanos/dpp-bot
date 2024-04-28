@@ -10,8 +10,9 @@ add_executable(${PROJECT_NAME} src/main.cpp ${SOURCES})
 
 find_package(DPP REQUIRED)   
 find_package(libpqxx REQUIRED)
+find_package(hiredis REQUIRED)
 
-target_link_libraries(${PROJECT_NAME} ${DPP_LIBRARIES} pqxx pq spdlog)
+target_link_libraries(${PROJECT_NAME} ${DPP_LIBRARIES} pqxx pq spdlog hiredis)
 
 target_include_directories(
     ${PROJECT_NAME} PRIVATE 

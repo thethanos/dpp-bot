@@ -3,15 +3,10 @@
 
 #include <algorithm>
 
-int BotHandler::init_data(const std::string& path_to_keys)
+int BotHandler::init_data()
 {
     if (auto error = m_games->init_game_storage(); error.has_value()) {
         spdlog::error(std::format("init_game_storage: {}", error.value()));
-        return -1;
-    }
-
-    if (auto error = m_users->init_user_data_storage(); error.has_value()) {
-        spdlog::error(std::format("init_user_data_storage: {}", error.value()));
         return -1;
     }
 
@@ -21,7 +16,7 @@ int BotHandler::init_data(const std::string& path_to_keys)
     
     if (m_games->empty()) {
         spdlog::info("init_data: trying to load from file..");
-        if (auto error = m_games->load_games_from_file(path_to_keys); error.has_value()) {
+        if (auto error = m_games->load_games_from_file(m_cfg.path_to_keys); error.has_value()) {
             spdlog::error(error.value());
             return -1;
         }
@@ -51,6 +46,9 @@ void BotHandler::init_handlers()
     m_bot.on_slashcommand(std::bind(&BotHandler::handle_slashcommand, this, std::placeholders::_1));
     m_bot.on_button_click(std::bind(&BotHandler::handle_button_click, this, std::placeholders::_1));
     m_bot.on_message_create(std::bind(&BotHandler::handle_message_received, this, std::placeholders::_1));
+    m_bot.on_guild_member_remove([this](const dpp::guild_member_remove_t& event){
+        m_users->remove_score_counter(event.removed.id.str());
+    });
 }
 
 void BotHandler::handle_ready(const dpp::ready_t& event)
@@ -119,7 +117,7 @@ void BotHandler::on_slashcommand_random(const dpp::slashcommand_t& event)
     auto user_id = meta.value().user_id;
 
     auto user_score = m_users->get_score(user_id);
-    if (!user_score.has_value() || user_score.value() < 10) {
+    if (!user_score.has_value() || user_score.value() < m_cfg.game_price) {
         event.reply(std::format("Sorry, your balance is {}. Please try again later.", user_score.has_value()?user_score.value():0));
         return;
     }
@@ -195,15 +193,15 @@ void BotHandler::on_button_click_random(const dpp::button_click_t& event, const 
         event.reply();
         event.delete_original_response();
         m_games->deactivate(game.value());
-        m_users->remove_score(meta.user_id, 10);
+        m_users->remove_score(meta.user_id, m_cfg.game_price);
         return;
     }
 
     if (event.custom_id == "sell") {
-        m_bot.message_create(dpp::message(event.command.channel_id, "You sold the game for half of the price"));
+        m_bot.message_create(dpp::message(event.command.channel_id, std::format("You sold the game for {} points", m_cfg.game_price/2)));
         event.reply();
         event.delete_original_response();
-        m_users->remove_score(meta.user_id, 5);
+        m_users->remove_score(meta.user_id, m_cfg.game_price/2);
         return;
     }
 }

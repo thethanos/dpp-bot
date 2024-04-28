@@ -9,10 +9,11 @@
 class BotHandler
 {
 public:
-    BotHandler(const std::string& token, 
+    BotHandler(const Config& cfg, 
         std::unique_ptr<GameStorage> games, 
         std::unique_ptr<UserDataStorage> users)
-        :m_bot(token,
+        :m_cfg(cfg)
+        ,m_bot(cfg.token,
             dpp::i_message_content | 
             dpp::i_guilds | 
             dpp::i_guild_members | 
@@ -24,7 +25,7 @@ public:
     }
 
 public:
-    int init_data(const std::string& path_to_keys = "");
+    int init_data();
     void init_handlers();
     void start() { m_bot.start(dpp::st_wait); }
 
@@ -42,6 +43,7 @@ private:
     void on_button_click_games(const dpp::button_click_t& event, const EventMeta& meta);
 
 private:
+    Config m_cfg;
     dpp::cluster m_bot;
     std::unique_ptr<GameStorage> m_games;
     std::unique_ptr<UserDataStorage> m_users;
